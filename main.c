@@ -103,37 +103,7 @@
 #include "task.h"
 #include "queue.h"
 #include "croutine.h"
-
-#if 0
-#include <xc.h>
-
-// CONFIG3
-#pragma config WPFP = WPFP511           // Write Protection Flash Page Segment Boundary (Highest Page (same as page 170))
-#pragma config WPDIS = WPDIS            // Segment Write Protection Disable bit (Segmented code protection disabled)
-#pragma config WPCFG = WPCFGDIS         // Configuration Word Code Page Protection Select bit (Last page(at the top of program memory) and Flash configuration words are not protected)
-#pragma config WPEND = WPENDMEM         // Segment Write Protection End Page Select bit (Write Protect from WPFP to the last page of memory)
-
-// CONFIG2
-#pragma config POSCMOD = HS             // Primary Oscillator Select (HS oscillator mode selected)
-#pragma config DISUVREG = OFF           // Internal USB 3.3V Regulator Disable bit (Regulator is disabled)
-#pragma config IOL1WAY = ON             // IOLOCK One-Way Set Enable bit (Write RP Registers Once)
-#pragma config OSCIOFNC = OFF           // Primary Oscillator Output Function (OSCO functions as CLKO (FOSC/2))
-#pragma config FCKSM = CSDCMD           // Clock Switching and Monitor (Both Clock Switching and Fail-safe Clock Monitor are disabled)
-#pragma config FNOSC = PRIPLL           // Oscillator Select (Primary oscillator (XT, HS, EC) with PLL module (XTPLL,HSPLL, ECPLL))
-#pragma config PLL_96MHZ = ON           // 96MHz PLL Disable (Enabled)
-#pragma config PLLDIV = DIV2            // USB 96 MHz PLL Prescaler Select bits (Oscillator input divided by 2 (8MHz input))
-#pragma config IESO = ON                // Internal External Switch Over Mode (IESO mode (Two-speed start-up) enabled)
-
-// CONFIG1
-#pragma config WDTPS = PS32768          // Watchdog Timer Postscaler (1:32,768)
-#pragma config FWPSA = PR128            // WDT Prescaler (Prescaler ratio of 1:128)
-#pragma config WINDIS = OFF             // Watchdog Timer Window (Standard Watchdog Timer enabled,(Windowed-mode is disabled))
-#pragma config FWDTEN = OFF             // Watchdog Timer Enable (Watchdog Timer is disabled)
-#pragma config ICS = PGx2               // Comm Channel Select (Emulator functions are shared with PGEC2/PGED2)
-#pragma config GWRP = OFF               // General Code Segment Write Protect (Writes to program memory are allowed)
-#pragma config GCP = OFF                // General Code Segment Code Protect (Code protection is disabled)
-#pragma config JTAGEN = OFF             // JTAG Port Enable (JTAG port is disabled)
-#endif
+#include "led.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -190,98 +160,6 @@
     #error Cannot define configuration bits.
 #endif
 
-/** LED ************************************************************/
-    #define InitAllLEDs()  {TRISE = 0; LATE = 0;}
-
-    #define mLED_3              LATEbits.LATE0
-    #define mLED_4              LATEbits.LATE1
-    #define mLED_5              LATEbits.LATE2
-    #define mLED_6              LATEbits.LATE3
-    #define mLED_7              LATEbits.LATE4
-    #define mLED_8              LATEbits.LATE5
-    #define mLED_9              LATEbits.LATE6
-    #define mLED_10             LATEbits.LATE7
-
-    #define LED0_On()         mLED_3  = 1;
-    #define LED1_On()         mLED_4  = 1;
-    #define LED2_On()         mLED_5  = 1;
-    #define LED3_On()         mLED_6  = 1;
-    #define LED4_On()         mLED_7  = 1;
-    #define LED5_On()         mLED_8  = 1;
-    #define LED6_On()         mLED_9  = 1;
-    #define LED7_On()         mLED_10 = 1;
-
-    #define LED0_Off()        mLED_3  = 0;
-    #define LED1_Off()        mLED_4  = 0;
-    #define LED2_Off()        mLED_5  = 0;
-    #define LED3_Off()        mLED_6  = 0;
-    #define LED4_Off()        mLED_7  = 0;
-    #define LED5_Off()        mLED_8  = 0;
-    #define LED6_Off()        mLED_9  = 0;
-    #define LED7_Off()        mLED_10 = 0;
-
-// C30 and C32 Exception Handlers
-// If your code gets here, you either tried to read or write
-// a NULL pointer, or your application overflowed the stack
-// by having too many local variables or parameters declared.
-#if defined(__C30__) || defined __XC16__
-	void _ISR __attribute__((__no_auto_psv__)) _AddressError(void)
-	{
-            LED6_On();
-            //while(1){}
-	}
-	void _ISR __attribute__((__no_auto_psv__)) _StackError(void)
-	{
-            while(1){}
-	}
-
-#elif defined(__C32__)
-	void _general_exception_handler(unsigned cause, unsigned status)
-	{
-        #if defined(DEBUG_MODE)
-            unsigned long address = _CP0_GET_EPC();
-        #endif
-
-        while(1){}
-	}
-#endif
-
-
-/* Demo task priorities. */
-#define mainBLOCK_Q_PRIORITY				( tskIDLE_PRIORITY + 2 )
-#define mainCHECK_TASK_PRIORITY				( tskIDLE_PRIORITY + 3 )
-#define mainCOM_TEST_PRIORITY				( 2 )
-
-/* The check task may require a bit more stack as it calls sprintf(). */
-#define mainCHECK_TAKS_STACK_SIZE			( configMINIMAL_STACK_SIZE * 2 )
-
-/* The execution period of the check task. */
-#define mainCHECK_TASK_PERIOD				( ( portTickType ) 3000 / portTICK_RATE_MS )
-
-/* The number of flash co-routines to create. */
-#define mainNUM_FLASH_COROUTINES			( 5 )
-
-/* Baud rate used by the comtest tasks. */
-#define mainCOM_TEST_BAUD_RATE				( 19200 )
-
-/* The LED used by the comtest tasks.  mainCOM_TEST_LED + 1 is also used.
-See the comtest.c file for more information. */
-#define mainCOM_TEST_LED					( 6 )
-
-/* The frequency at which the "fast interrupt test" interrupt will occur. */
-#define mainTEST_INTERRUPT_FREQUENCY		( 20000 )
-
-/* The number of processor clocks we expect to occur between each "fast
-interrupt test" interrupt. */
-#define mainEXPECTED_CLOCKS_BETWEEN_INTERRUPTS ( configCPU_CLOCK_HZ / mainTEST_INTERRUPT_FREQUENCY )
-
-/* The number of nano seconds between each processor clock. */
-#define mainNS_PER_CLOCK ( ( unsigned short ) ( ( 1.0 / ( double ) configCPU_CLOCK_HZ ) * 1000000000.0 ) )
-
-/* Dimension the buffer used to hold the value of the maximum jitter time when
-it is converted to a string. */
-#define mainMAX_STRING_LENGTH				( 20 )
-
 /*-----------------------------------------------------------*/
 
 /*
@@ -306,6 +184,7 @@ static void vTask_test5 (void *pvParameters );
 
 xQueueHandle xQueue;
 
+#define vTask_STACK_SIZE    (configMINIMAL_STACK_SIZE * 5)
 /*
  * Create the demo tasks then start the scheduler.
  */
@@ -314,11 +193,11 @@ int main( void )
     //printf( "\r\nmain() started.\r\n" );
     xQueue = xQueueCreate(20, sizeof(int));
     InitAllLEDs();
-    xTaskCreate( vTask_test1, ( signed char * )"T1", mainCHECK_TAKS_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test2, ( signed char * )"T2", mainCHECK_TAKS_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test3, ( signed char * )"T3", mainCHECK_TAKS_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test4, ( signed char * )"T4", mainCHECK_TAKS_STACK_SIZE, NULL, 4, NULL );
-    xTaskCreate( vTask_test5, ( signed char * )"T5", mainCHECK_TAKS_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
+    xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
 
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
@@ -353,6 +232,7 @@ static void vTask_test3(void *pvParameters)
 			xStatus = xQueueSendToBack(xQueue, &value[a], 0);
 			if (xStatus != pdPASS)
 			{
+                            while(1){};
 				/* The send operation could not complete because the queue was full -
 				this must be an error as the queue should never contain more than
 				one item! */
@@ -377,22 +257,23 @@ static void vTask_test5(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
-		vTaskDelayUntil(&xLastWakeTime, 100);
+		vTaskDelayUntil(&xLastWakeTime, 200);
 
 		for (a = 0; a < 10; a++)
 		{
 			xStatus = uxQueueMessagesWaiting(xQueue);
-			//printf("T5 QQQ ============== %d\n", xStatus);
+			//printf("T3 QQQ ======= %d\n", xStatus);
 			xStatus = xQueueSendToBack(xQueue, &value[a], 0);
 			if (xStatus != pdPASS)
 			{
+                            while(1){};
 				/* The send operation could not complete because the queue was full -
 				this must be an error as the queue should never contain more than
 				one item! */
 				//printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
 			}
 
-			//printf("T5 =>Q [%d]\n", value[a]);
+			//printf("T3 =>Q [%d]\n", value[a]);
 		}
 	}
 }
@@ -414,6 +295,7 @@ static void vTask_test4(void *pvParameters)
 		xStatus = xQueueReceive(xQueue, &value, portMAX_DELAY);
 		if (xStatus != pdPASS)
 		{
+                    while(1){};
 			/* The send operation could not complete because the queue was full -
 			this must be an error as the queue should never contain more than
 			one item! */
@@ -463,13 +345,3 @@ static void prvSetupHardware( void )
 	//vParTestInitialise();
 }
 /*-----------------------------------------------------------*/
-
-/*-----------------------------------------------------------*/
-
-void vApplicationIdleHook( void )
-{
-	/* Schedule the co-routines from within the idle task hook. */
-	vCoRoutineSchedule();
-}
-/*-----------------------------------------------------------*/
-

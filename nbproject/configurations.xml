@@ -29,6 +29,7 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>FreeRTOSConfig.h</itemPath>
+      <itemPath>hook.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c FreeRTOS/Source/portable/MemMang/heap_2.c
+SOURCEFILES_QUOTED_IF_SPACED=FreeRTOS/Source/portable/MemMang/heap_2.c FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c hook.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o.d ${OBJECTDIR}/FreeRTOS/Source/croutine.o.d ${OBJECTDIR}/FreeRTOS/Source/list.o.d ${OBJECTDIR}/FreeRTOS/Source/queue.o.d ${OBJECTDIR}/FreeRTOS/Source/tasks.o.d ${OBJECTDIR}/FreeRTOS/Source/timers.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/hook.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o.d ${OBJECTDIR}/FreeRTOS/Source/croutine.o.d ${OBJECTDIR}/FreeRTOS/Source/list.o.d ${OBJECTDIR}/FreeRTOS/Source/queue.o.d ${OBJECTDIR}/FreeRTOS/Source/tasks.o.d ${OBJECTDIR}/FreeRTOS/Source/timers.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/hook.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o
+OBJECTFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/hook.o
 
 # Source Files
-SOURCEFILES=FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c FreeRTOS/Source/portable/MemMang/heap_2.c
+SOURCEFILES=FreeRTOS/Source/portable/MemMang/heap_2.c FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c hook.c
 
 
 CFLAGS=
@@ -79,6 +79,13 @@ MP_LINKER_FILE_OPTION=,--script=p24FJ256GB110.gld
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
+${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o: FreeRTOS/Source/portable/MemMang/heap_2.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang 
+	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d 
+	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  FreeRTOS/Source/portable/MemMang/heap_2.c  -o ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o: FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC 
 	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o.d 
@@ -128,14 +135,21 @@ ${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  main.c  -o ${OBJECTDIR}/main.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/main.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/main.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/hook.o: hook.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/hook.o.d 
+	@${RM} ${OBJECTDIR}/hook.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hook.c  -o ${OBJECTDIR}/hook.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hook.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/hook.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+else
 ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o: FreeRTOS/Source/portable/MemMang/heap_2.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang 
 	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d 
 	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  FreeRTOS/Source/portable/MemMang/heap_2.c  -o ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
+	${MP_CC} $(MP_EXTRA_CC_PRE)  FreeRTOS/Source/portable/MemMang/heap_2.c  -o ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d"      -g -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-else
 ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o: FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC 
 	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o.d 
@@ -185,12 +199,12 @@ ${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  main.c  -o ${OBJECTDIR}/main.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/main.o.d"      -g -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/main.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o: FreeRTOS/Source/portable/MemMang/heap_2.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang 
-	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d 
-	@${RM} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  FreeRTOS/Source/portable/MemMang/heap_2.c  -o ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d"      -g -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
-	@${FIXDEPS} "${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_2.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+${OBJECTDIR}/hook.o: hook.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/hook.o.d 
+	@${RM} ${OBJECTDIR}/hook.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  hook.c  -o ${OBJECTDIR}/hook.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/hook.o.d"      -g -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/hook.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

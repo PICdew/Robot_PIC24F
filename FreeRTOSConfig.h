@@ -111,4 +111,5 @@ to exclude the API function. */
 
 #define configKERNEL_INTERRUPT_PRIORITY         0x01
 
+#define configUSE_MALLOC_FAILED_HOOK            1
 #endif /* FREERTOS_CONFIG_H */
