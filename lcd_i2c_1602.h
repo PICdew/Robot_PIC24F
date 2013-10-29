@@ -51,17 +51,29 @@
 #define LCD_BACKLIGHT 0x08
 #define LCD_NOBACKLIGHT 0x00
 
+// function on or off
+#define LCD_FUNC_ON     0x01
+#define LCD_FUNC_OFF    0x00
+
 #define En 0b00000100  // Enable bit
 #define Rw 0b00000010  // Read/Write bit
 #define Rs 0b00000001  // Register select bit
 
-void Lcd_1602_Init(UINT8 lcd_Addr,UINT8 lcd_cols,UINT8 lcd_rows, UINT8 dotsize);
-void Lcd_1602_write4bits(UINT8 value);
-void Lcd_1602_expanderWrite(UINT8 _data);
-void Lcd_1602_pulseEnable(UINT8 _data);
-void Lcd_1602_DisplayOneChar(UINT8 X,UINT8 Y,UINT8 DData);
-void Lcd_1602_DisplayListChar(UINT8 X,UINT8 Y,UINT8 *DData, UINT8 L);
-void Lcd_1602_Display10BitData(int value,UINT8 x,UINT8 y);
-void Lcd_1602_DisplayData(int value,UINT8 x,UINT8 y);
+void Lcd_1602_clear(void);
+void Lcd_1602_home(void);
+void Lcd_1602_set_cursor(int col, int row);
+void Lcd_1602_display(int sw);
+void Lcd_1602_cursor(int sw);
+void Lcd_1602_blink(int sw);
+void Lcd_1602_scroll_dir(int sw);
+void Lcd_1602_display_dir(int sw);
+void Lcd_1602_autoscroll(int sw);
+void Lcd_1602_create_char(int location, int charmap[]);
+void Lcd_1602_backlight(int sw);
+void Lcd_1602_display_string(int x,int y, char *data, int n);
+void Lcd_1602_display_dec(int x,int y, int value);
+void Lcd_1602_display_hex(int x,int y, int value);
+void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize);
+
 #endif
 

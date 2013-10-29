@@ -22,6 +22,7 @@
 // LiquidCrystal constructor is called).
 /* Standard includes. */
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
@@ -34,14 +35,37 @@
 #include "i2c_func.h"
 #include "lcd_i2c_1602.h"
 
-UINT8 _Addr;
-UINT8 _displayfunction;
-UINT8 _displaycontrol;
-UINT8 _displaymode;
-UINT8 _numlines;
-UINT8 _cols;
-UINT8 _rows;
-UINT8 _backlightval;
+int _Addr;
+int _displayfunction;
+int _displaycontrol;
+int _displaymode;
+int _numlines;
+int _backlightval;
+
+
+void vTask_LCD(void *pvParameters)
+{
+    portTickType xLastWakeTime;
+    portBASE_TYPE xStatus;
+
+    (void)pvParameters;
+    xLastWakeTime = xTaskGetTickCount();
+    for (;;)
+    {
+	vTaskDelayUntil(&xLastWakeTime, 200);
+	xStatus = uxQueueMessagesWaiting(xQueue);
+	if (xStatus != pdPASS)
+	{
+                            while(1){};
+				/* The send operation could not complete because the queue was full -
+				this must be an error as the queue should never contain more than
+				one item! */
+				//printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
+	}
+	//printf("T3 =>Q [%d]\n", value[a]);
+    }
+}
+
 
 /*
 LiquidCrystal_I2C lcd(0x4E,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -55,15 +79,11 @@ void setup()
 }
 */
 
-
-
-
-
-
+#if 0
 //****************************************
 //整數轉字符串
 //****************************************
-void Lcd_printf(UINT8 *s,int temp_data)
+void Lcd_printf(int *s,int temp_data)
 {
 	if(temp_data<0)
 	{
@@ -77,9 +97,10 @@ void Lcd_printf(UINT8 *s,int temp_data)
 	temp_data=temp_data%10;      //取余運算
 	*++s =temp_data+0x30;
 }
+#endif
 
 /************ low level data pushing commands **********/
-unsigned char Lcd_i2c_write(unsigned char ControlByte, unsigned char data)
+static unsigned char Lcd_i2c_write(unsigned char ControlByte, unsigned char data)
 {
 	unsigned char ErrorCode;
 
@@ -97,41 +118,44 @@ unsigned char Lcd_i2c_write(unsigned char ControlByte, unsigned char data)
 	return(ErrorCode);
 }
 
-// write either command or data
-void Lcd_1602_send(UINT8 value, UINT8 mode) {
-	UINT8 highnib = value&0xf0;
-	UINT8 lownib = (value<<4)&0xf0;
-       Lcd_1602_write4bits((highnib)|mode);
-	Lcd_1602_write4bits((lownib)|mode);
-}
-
-void Lcd_1602_write4bits(UINT8 value) {
-	Lcd_1602_expanderWrite(value);
-	Lcd_1602_pulseEnable(value);
-}
-
-void Lcd_1602_expanderWrite(UINT8 _data){
+static void Lcd_1602_expanderWrite(int _data){
     Lcd_i2c_write(_Addr,  _data | _backlightval);
 }
 
-void Lcd_1602_pulseEnable(UINT8 _data){
+static void Lcd_1602_pulseEnable(int _data){
 	Lcd_1602_expanderWrite(_data | En);	// En high
 	delay_ms(1);		// enable pulse must be >450ns
-
 	Lcd_1602_expanderWrite(_data & ~En);	// En low
 	delay_ms(5);		// commands need > 37us to settle
 }
-
-void Lcd_1602_command(UINT8 value) {
-	Lcd_1602_send(value, 0);
+static void Lcd_1602_write4bits(int value)
+{
+    Lcd_1602_expanderWrite(value);
+    Lcd_1602_pulseEnable(value);
 }
 
-void Lcd_1602_write(UINT8 value) {
-	Lcd_1602_send(value, Rs);
+// write either command or data
+static void Lcd_1602_send(int value, int mode)
+{
+    int highnib = value & 0xf0;
+    int lownib = (value << 4) & 0xf0;
+    Lcd_1602_write4bits((highnib)|mode);
+    Lcd_1602_write4bits((lownib)|mode);
+}
+
+static void Lcd_1602_command(int value)
+{
+    Lcd_1602_send(value, 0);
+}
+
+static void Lcd_1602_write(int value)
+{
+    Lcd_1602_send(value, Rs);
 }
 
 /********** high level commands, for the user! */
-void Lcd_1602_clear(){
+void Lcd_1602_clear()
+{
 	Lcd_1602_command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
 	delay_ms(2);  // this command takes a long time!
 }
@@ -141,7 +165,7 @@ void Lcd_1602_home(){
 	delay_ms(2);  // this command takes a long time!
 }
 
-void Lcd_1602_setCursor(UINT8 col, UINT8 row){
+void Lcd_1602_set_cursor(int col, int row){
 	int row_offsets[] = { 0x00, 0x40, 0x14, 0x54 };
 	if ( row > _numlines ) {
 		row = _numlines-1;    // we count rows starting w/0
@@ -150,71 +174,98 @@ void Lcd_1602_setCursor(UINT8 col, UINT8 row){
 }
 
 // Turn the display on/off (quickly)
-void Lcd_1602_noDisplay() {
-	_displaycontrol &= ~LCD_DISPLAYON;
-	Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
-}
-void Lcd_1602_display() {
-	_displaycontrol |= LCD_DISPLAYON;
-	Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
+void Lcd_1602_display(int sw)
+{
+    if (sw)
+    {
+        _displaycontrol |= LCD_DISPLAYON;
+    }
+    else
+    {
+        _displaycontrol &= ~LCD_DISPLAYON;
+    }
+    Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 
 // Turns the underline cursor on/off
-void Lcd_1602_noCursor() {
-	_displaycontrol &= ~LCD_CURSORON;
-	Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
-}
-void Lcd_1602_cursor() {
-	_displaycontrol |= LCD_CURSORON;
-	Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
+void Lcd_1602_cursor(int sw)
+{
+    if (sw)
+    {
+        _displaycontrol |= LCD_CURSORON;
+    }
+    else
+    {
+        _displaycontrol &= ~LCD_CURSORON;
+    }
+    Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 
 // Turn on and off the blinking cursor
-void Lcd_1602_noBlink() {
-	_displaycontrol &= ~LCD_BLINKON;
-	Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
-}
-void Lcd_1602_blink() {
-	_displaycontrol |= LCD_BLINKON;
-	Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
+void Lcd_1602_blink(int sw)
+{
+    if (sw)
+    {
+        _displaycontrol |= LCD_BLINKON;
+    }
+    else
+    {
+        _displaycontrol &= ~LCD_BLINKON;
+    }
+    Lcd_1602_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 
 // These commands scroll the display without changing the RAM
-void Lcd_1602_scrollDisplayLeft(void) {
-	Lcd_1602_command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
-}
-void Lcd_1602_scrollDisplayRight(void) {
-	Lcd_1602_command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
-}
-
-// This is for text that flows Left to Right
-void Lcd_1602_leftToRight(void) {
-	_displaymode |= LCD_ENTRYLEFT;
-	Lcd_1602_command(LCD_ENTRYMODESET | _displaymode);
-}
-
-// This is for text that flows Right to Left
-void Lcd_1602_rightToLeft(void) {
-	_displaymode &= ~LCD_ENTRYLEFT;
-	Lcd_1602_command(LCD_ENTRYMODESET | _displaymode);
+void Lcd_1602_scroll_dir(int sw)
+{
+    int func;
+    if (sw)
+    {
+        // Left
+        func = LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT;
+    }
+    else
+    {
+        // Right
+        func = LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT;
+    }
+    Lcd_1602_command(func);
 }
 
-// This will 'right justify' text from the cursor
-void Lcd_1602_autoscroll(void) {
-	_displaymode |= LCD_ENTRYSHIFTINCREMENT;
-	Lcd_1602_command(LCD_ENTRYMODESET | _displaymode);
+// This is for text that flows Left to Right or R2L
+void Lcd_1602_display_dir(int sw)
+{
+    if (sw)
+    {
+        // Right to Left
+        _displaymode &= ~LCD_ENTRYLEFT;
+    }
+    else
+    {
+        //Left to Right
+        _displaymode |= LCD_ENTRYLEFT;
+    }
+    Lcd_1602_command(LCD_ENTRYMODESET | _displaymode);
 }
 
 // This will 'left justify' text from the cursor
-void Lcd_1602_noAutoscroll(void) {
-	_displaymode &= ~LCD_ENTRYSHIFTINCREMENT;
-	Lcd_1602_command(LCD_ENTRYMODESET | _displaymode);
+void Lcd_1602_autoscroll(int sw)
+{
+    if (sw)
+    {
+	_displaymode |= LCD_ENTRYSHIFTINCREMENT;
+    }
+    else
+    {
+       	_displaymode &= ~LCD_ENTRYSHIFTINCREMENT;
+    }
+    Lcd_1602_command(LCD_ENTRYMODESET | _displaymode);
 }
 
 // Allows us to fill the first 8 CGRAM locations
 // with custom characters
-void Lcd_1602_createChar(UINT8 location, UINT8 charmap[]) {
-    UINT8 i;
+void Lcd_1602_create_char(int location, int charmap[]) {
+    int i;
 	location &= 0x7; // we only have 8 locations 0-7
 	Lcd_1602_command(LCD_SETCGRAMADDR | (location << 3));
 	for (i=0; i<8; i++) {
@@ -223,81 +274,69 @@ void Lcd_1602_createChar(UINT8 location, UINT8 charmap[]) {
 }
 
 // Turn the (optional) backlight off/on
-void Lcd_1602_noBacklight(void) {
-	_backlightval=LCD_NOBACKLIGHT;
-	Lcd_1602_expanderWrite(0);
-}
-
-void Lcd_1602_backlight(void) {
-	_backlightval=LCD_BACKLIGHT;
-	Lcd_1602_expanderWrite(0);
-}
-
-//////////////////////////////
-//****************************************
-//LCD1602寫入一個字符
-//****************************************
-void Lcd_1602_DisplayOneChar(UINT8 X,UINT8 Y,UINT8 DData)
+void Lcd_1602_backlight(int sw)
 {
-	Y &= 1;
-	X &= 15;
-	if (Y) X |= 0x40;
-	X |= 0x80;
-	Lcd_1602_command(X);
-	Lcd_1602_write(DData);
+    if (sw)
+    {
+        _backlightval=LCD_BACKLIGHT;
+    }
+    else
+    {
+        _backlightval=LCD_NOBACKLIGHT;
+    }
+    Lcd_1602_expanderWrite(0);
 }
 
 //****************************************
-//LCD1602顯示字符串
+//LCD1602 show string
 //****************************************
-void Lcd_1602_DisplayListChar(UINT8 X,UINT8 Y,UINT8 *DData, UINT8 L)
+void Lcd_1602_display_string(int x,int y,char *data, int n)
 {
-	UINT8 ListLength=0;
+	int a=0;
 
-        Y &= 0x1;
-	X &= 0xF;
-
-        while(L--)
+        y &= 0x1;
+        while(n--)
 	{
-		Lcd_1602_DisplayOneChar(X,Y,DData[ListLength]);
-		ListLength++;
-		X++;
+            x &= 0xF;
+            if (y)
+                x |= 0x40;
+            x |= 0x80;
+            Lcd_1602_command(x);
+            Lcd_1602_write(data[a]);
+            a++;
+            x++;
 	}
 }
 
-//**************************************
-//在1602上顯示10位數據
-//**************************************
-void Lcd_1602_Display10BitData(int value,UINT8 x,UINT8 y)
+void Lcd_1602_display_dec(int x,int y, int value)
 {
-    UINT8   dis[4];		//顯示數字(-511至512)的字符數組
-	value /= 64;			//轉換為10位數據
-	Lcd_printf(dis, value);         //轉換數據顯示
-	Lcd_1602_DisplayListChar(x,y,dis,4);	//啟始列，行，顯示數組，顯示長度
+    char dis[8];
+
+    //Lcd_printf(dis, value);         //轉換數據顯示
+    itoa(dis, value, 10);
+    Lcd_1602_display_string(x, y, dis, strlen(dis));	//啟始列，行，顯示數組，顯示長度
 }
 
-void Lcd_1602_DisplayData(int value,UINT8 x,UINT8 y)
+void Lcd_1602_display_hex(int x,int y, int value)
 {
-    UINT8   dis[4];		//顯示數字(-511至512)的字符數組
+    char dis[8];
 
-    Lcd_printf(dis, value);         //轉換數據顯示
-    Lcd_1602_DisplayListChar(x,y,dis,4);	//啟始列，行，顯示數組，顯示長度
+    //Lcd_printf(dis, value);         //轉換數據顯示
+    itoa(dis, value, 16);
+    Lcd_1602_display_string(x, y, dis, strlen(dis));	//啟始列，行，顯示數組，顯示長度
 }
-
-
-
 
 /// High level functions
  //Lcd_1602_Init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-void Lcd_1602_Init(UINT8 lcd_Addr,UINT8 lcd_cols,UINT8 lcd_rows, UINT8 dotsize)
+void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
 {
+    char str[20] = "Regis good!";
+
     _displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
     _backlightval = LCD_NOBACKLIGHT;
 
     _Addr = lcd_Addr;
-    _cols = lcd_cols;
-    _rows = lcd_rows;
-
+  
     if (lcd_rows > 1)
     {
         _displayfunction |= LCD_2LINE;
@@ -336,7 +375,7 @@ void Lcd_1602_Init(UINT8 lcd_Addr,UINT8 lcd_cols,UINT8 lcd_rows, UINT8 dotsize)
     // turn the display on with no cursor or blinking default
     //_displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
     _displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
-    Lcd_1602_display();
+    Lcd_1602_display(LCD_FUNC_ON);
 
     // clear it off
     Lcd_1602_clear();
@@ -349,13 +388,7 @@ void Lcd_1602_Init(UINT8 lcd_Addr,UINT8 lcd_cols,UINT8 lcd_rows, UINT8 dotsize)
 
     Lcd_1602_home();
 
-    Lcd_1602_backlight();
-    Lcd_1602_DisplayOneChar(0,0,'R');
-    Lcd_1602_DisplayOneChar(1,0,'e');
-    Lcd_1602_DisplayOneChar(2,0,'g');
-    Lcd_1602_DisplayOneChar(3,0,'i');
-    Lcd_1602_DisplayOneChar(4,0,'s');
+    Lcd_1602_backlight(LCD_FUNC_ON);
 
-    Lcd_1602_DisplayOneChar(0,1,'G');
-
+    Lcd_1602_display_string(0, 0, str, strlen(str));
 }

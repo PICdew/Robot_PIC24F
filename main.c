@@ -197,7 +197,7 @@ int main( void )
     xQueue = xQueueCreate(20, sizeof(int));
     InitAllLEDs();
     InitI2C();
-    Lcd_1602_Init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+    Lcd_1602_init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
