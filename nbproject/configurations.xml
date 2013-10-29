@@ -30,6 +30,8 @@
       <itemPath>main.c</itemPath>
       <itemPath>FreeRTOSConfig.h</itemPath>
       <itemPath>hook.c</itemPath>
+      <itemPath>lcd_i2c_1602.c</itemPath>
+      <itemPath>i2c_func.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

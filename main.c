@@ -105,6 +105,10 @@
 #include "croutine.h"
 #include "led.h"
 
+#include "i2c.h"
+#include "i2c_func.h"
+#include "lcd_i2c_1602.h"
+
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
 #if defined __C30__ || defined __XC16__
@@ -190,9 +194,11 @@ xQueueHandle xQueue;
  */
 int main( void )
 {
-    //printf( "\r\nmain() started.\r\n" );
     xQueue = xQueueCreate(20, sizeof(int));
     InitAllLEDs();
+    InitI2C();
+    Lcd_1602_Init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
