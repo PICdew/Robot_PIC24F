@@ -22,7 +22,6 @@
 // LiquidCrystal constructor is called).
 /* Standard includes. */
 #include <stdio.h>
-#include <stdlib.h>
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
@@ -101,6 +100,75 @@ void Lcd_printf(int *s,int temp_data)
 	*++s =temp_data+0x30;
 }
 #endif
+/* atoi: convert s to an integer
+ *
+ * Here's the easy way:
+ * int atoi(char *s){return (int)strtoul(s, NULL, 10);}
+ * But I'll behave...
+ */
+static int atoi(char *s)
+{
+    int n, sign;
+
+    while (isspace(*s))
+        s++;
+    sign = (*s == '+' || *s == '-') ? ((*s++ == '+') ? 1 : -1) : 1;
+    for (n = 0; isdigit(*s); s++)
+        n = (n * 10) + (*s - '0');  /* note to language lawyers --
+                                     * the digits are in consecutive
+                                     * order in the character set
+                                     * C90 5.2.1
+                                     */
+    return sign * n;
+}
+
+static char *utoa(unsigned value, char *digits, int base)
+{
+    char *s, *p;
+
+    s = "0123456789abcdefghijklmnopqrstuvwxyz"; /* don't care if s is in
+
+                                                 * read-only memory
+                                                 */
+    if (base == 0)
+        base = 10;
+    if (digits == NULL || base < 2 || base > 36)
+        return NULL;
+    if (value < (unsigned) base) {
+        digits[0] = s[value];
+        digits[1] = '\0';
+    } else {
+        for (p = utoa(value / ((unsigned)base), digits, base);
+             *p;
+             p++);
+        utoa( value % ((unsigned)base), p, base);
+    }
+    return digits;
+}
+
+static char *itoa(char *digits, int value, int base)
+{
+    char *d;
+    unsigned u; /* assume unsigned is big enough to hold all the
+                 * unsigned values -x could possibly be -- don't
+                 * know how well this assumption holds on the
+                 * DeathStation 9000, so beware of nasal demons
+                 */
+
+    d = digits;
+    if (base == 0)
+        base = 10;
+    if (digits == NULL || base < 2 || base > 36)
+        return NULL;
+    if (value < 0) {
+        *d++ = '-';
+        u = -((unsigned)value);
+    } else
+        u = value;
+    utoa(u, d, base);
+    return digits;
+}
+
 
 /************ low level data pushing commands **********/
 static unsigned char Lcd_i2c_write(unsigned char ControlByte, unsigned char data)
@@ -398,7 +466,7 @@ void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
     //Lcd_1602_autoscroll(LCD_FUNC_ON);
     Lcd_1602_display_string(0, 0, str, strlen(str));
     
-    //Lcd_1602_display_hex(0,1,255);
-    //Lcd_1602_display_dec(5,1,3000);
+    Lcd_1602_display_hex(0,1,255);
+    Lcd_1602_display_dec(5,1,3000);
 
 }

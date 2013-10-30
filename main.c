@@ -233,7 +233,7 @@ static void vTask_test3(void *pvParameters)
 		vTaskDelayUntil(&xLastWakeTime, 200);
 
                 xStatus = uxQueueMessagesWaiting(xQueue);
-		Lcd_1602_display_dec(0,1,xStatus);
+		Lcd_1602_display_dec(0, 1, 99);
 
                 for (a = 0; a < 10; a++)
 		{
@@ -267,7 +267,7 @@ static void vTask_test5(void *pvParameters)
 	{
 		vTaskDelayUntil(&xLastWakeTime, 200);
 		xStatus = uxQueueMessagesWaiting(xQueue);
-		Lcd_1602_display_dec(0,1,xStatus);
+		Lcd_1602_display_dec(5, 1, 33);
 
                 for (a = 0; a < 10; a++)
 		{
