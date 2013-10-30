@@ -42,6 +42,7 @@ int _displaymode;
 int _numlines;
 int _backlightval;
 
+xQueueHandle xLCD_Queue;
 
 void vTask_LCD(void *pvParameters)
 {
@@ -50,17 +51,19 @@ void vTask_LCD(void *pvParameters)
 
     (void)pvParameters;
     xLastWakeTime = xTaskGetTickCount();
+    xLCD_Queue = xQueueCreate(20, sizeof(int));
+
     for (;;)
     {
 	vTaskDelayUntil(&xLastWakeTime, 200);
-	xStatus = uxQueueMessagesWaiting(xQueue);
+	xStatus = uxQueueMessagesWaiting(xLCD_Queue);
 	if (xStatus != pdPASS)
 	{
-                            while(1){};
-				/* The send operation could not complete because the queue was full -
-				this must be an error as the queue should never contain more than
-				one item! */
-				//printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
+            while(1){};
+            /* The send operation could not complete because the queue was full -
+            this must be an error as the queue should never contain more than
+            one item! */
+            //printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
 	}
 	//printf("T3 =>Q [%d]\n", value[a]);
     }
@@ -118,16 +121,19 @@ static unsigned char Lcd_i2c_write(unsigned char ControlByte, unsigned char data
 	return(ErrorCode);
 }
 
-static void Lcd_1602_expanderWrite(int _data){
+static void Lcd_1602_expanderWrite(int _data)
+{
     Lcd_i2c_write(_Addr,  _data | _backlightval);
 }
 
-static void Lcd_1602_pulseEnable(int _data){
+static void Lcd_1602_pulseEnable(int _data)
+{
 	Lcd_1602_expanderWrite(_data | En);	// En high
 	delay_ms(1);		// enable pulse must be >450ns
 	Lcd_1602_expanderWrite(_data & ~En);	// En low
 	delay_ms(5);		// commands need > 37us to settle
 }
+
 static void Lcd_1602_write4bits(int value)
 {
     Lcd_1602_expanderWrite(value);
@@ -330,7 +336,7 @@ void Lcd_1602_display_hex(int x,int y, int value)
  //Lcd_1602_Init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
 {
-    char str[20] = "Regis good!";
+    char str[20] = "Regis is good!";
 
     _displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
     _backlightval = LCD_NOBACKLIGHT;
@@ -389,6 +395,10 @@ void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
     Lcd_1602_home();
 
     Lcd_1602_backlight(LCD_FUNC_ON);
-
+    //Lcd_1602_autoscroll(LCD_FUNC_ON);
     Lcd_1602_display_string(0, 0, str, strlen(str));
+    
+    //Lcd_1602_display_hex(0,1,255);
+    //Lcd_1602_display_dec(5,1,3000);
+
 }

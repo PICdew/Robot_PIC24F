@@ -195,6 +195,7 @@ xQueueHandle xQueue;
 int main( void )
 {
     xQueue = xQueueCreate(20, sizeof(int));
+
     InitAllLEDs();
     InitI2C();
     Lcd_1602_init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -231,10 +232,11 @@ static void vTask_test3(void *pvParameters)
 	{
 		vTaskDelayUntil(&xLastWakeTime, 200);
 
-		for (a = 0; a < 10; a++)
+                xStatus = uxQueueMessagesWaiting(xQueue);
+		Lcd_1602_display_dec(0,1,xStatus);
+
+                for (a = 0; a < 10; a++)
 		{
-			xStatus = uxQueueMessagesWaiting(xQueue);
-			//printf("T3 QQQ ======= %d\n", xStatus);
 			xStatus = xQueueSendToBack(xQueue, &value[a], 0);
 			if (xStatus != pdPASS)
 			{
@@ -264,11 +266,11 @@ static void vTask_test5(void *pvParameters)
 	for (;;)
 	{
 		vTaskDelayUntil(&xLastWakeTime, 200);
+		xStatus = uxQueueMessagesWaiting(xQueue);
+		Lcd_1602_display_dec(0,1,xStatus);
 
-		for (a = 0; a < 10; a++)
+                for (a = 0; a < 10; a++)
 		{
-			xStatus = uxQueueMessagesWaiting(xQueue);
-			//printf("T3 QQQ ======= %d\n", xStatus);
 			xStatus = xQueueSendToBack(xQueue, &value[a], 0);
 			if (xStatus != pdPASS)
 			{

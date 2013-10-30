@@ -59,6 +59,8 @@
 #define Rw 0b00000010  // Read/Write bit
 #define Rs 0b00000001  // Register select bit
 
+extern xQueueHandle xLCD_Queue;
+
 void Lcd_1602_clear(void);
 void Lcd_1602_home(void);
 void Lcd_1602_set_cursor(int col, int row);
