@@ -108,6 +108,7 @@
 #include "i2c.h"
 #include "i2c_func.h"
 #include "lcd_i2c_1602.h"
+#include "gyro_mpu6050.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -195,6 +196,7 @@ xQueueHandle xQueue;
 int main( void )
 {
     xQueue = xQueueCreate(20, sizeof(int));
+    xLCD_Queue = xQueueCreate(50, sizeof(t_LCD_data));
 
     InitAllLEDs();
     InitI2C();
@@ -203,8 +205,10 @@ int main( void )
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
+    //xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
     xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_LCD, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 4, NULL );
+    xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
 
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
@@ -221,8 +225,10 @@ static void vTask_test3(void *pvParameters)
 {
 	unsigned char a;
 	portTickType xLastWakeTime;
-	int value[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	int value[10] = { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109 };
 	portBASE_TYPE xStatus;
+
+        t_LCD_data lcd_data;
 
 	(void)pvParameters;
 
@@ -230,25 +236,36 @@ static void vTask_test3(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
-		vTaskDelayUntil(&xLastWakeTime, 200);
+		vTaskDelayUntil(&xLastWakeTime, 500);
 
-                xStatus = uxQueueMessagesWaiting(xQueue);
-		Lcd_1602_display_dec(0, 1, 99);
+                //xStatus = uxQueueMessagesWaiting(xQueue);
+		//xStatus = uxQueueMessagesWaiting(xLCD_Queue);
+                //Lcd_1602_display_dec(1, 1, (int)a);
 
-                for (a = 0; a < 10; a++)
+                //for (a = 0; a < 10; a++)
 		{
-			xStatus = xQueueSendToBack(xQueue, &value[a], 0);
-			if (xStatus != pdPASS)
-			{
+                    lcd_data.x = 0;
+                    lcd_data.y = 1;
+                    lcd_data.value = value[a];
+                    lcd_data.base = 0; //dec
+
+                    xStatus = xQueueSendToBack(xLCD_Queue, &lcd_data, 0);
+                    if (xStatus != pdPASS)
+                    {
                             while(1){};
 				/* The send operation could not complete because the queue was full -
 				this must be an error as the queue should never contain more than
 				one item! */
 				//printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
-			}
-
-			//printf("T3 =>Q [%d]\n", value[a]);
+                    }
+                    //Lcd_1602_display_dec(1, 1, value[a]);
+                    //printf("T3 =>Q [%d]\n", value[a]);
 		}
+                if (a < 9)
+                    a++;
+                else
+                    a = 0;
+
 	}
 }
 
@@ -257,7 +274,6 @@ static void vTask_test5(void *pvParameters)
 	unsigned char a;
 	portTickType xLastWakeTime;
 	int value[10] = { 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
-	portBASE_TYPE xStatus;
 
 	(void)pvParameters;
 
@@ -265,24 +281,17 @@ static void vTask_test5(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
-		vTaskDelayUntil(&xLastWakeTime, 200);
-		xStatus = uxQueueMessagesWaiting(xQueue);
-		Lcd_1602_display_dec(5, 1, 33);
+		vTaskDelayUntil(&xLastWakeTime, 300);
+                //xStatus = uxQueueMessagesWaiting(xLCD_Queue);
+		//xStatus = uxQueueMessagesWaiting(xQueue);
+		//Lcd_1602_display_dec(5, 1, 33);
 
-                for (a = 0; a < 10; a++)
-		{
-			xStatus = xQueueSendToBack(xQueue, &value[a], 0);
-			if (xStatus != pdPASS)
-			{
-                            while(1){};
-				/* The send operation could not complete because the queue was full -
-				this must be an error as the queue should never contain more than
-				one item! */
-				//printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
-			}
+                LCD_Show(5, 1, value[a], 0);
 
-			//printf("T3 =>Q [%d]\n", value[a]);
-		}
+                if (a < 9)
+                    a++;
+                else
+                    a = 0;
 	}
 }
 

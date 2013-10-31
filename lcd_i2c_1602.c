@@ -47,15 +47,15 @@ void vTask_LCD(void *pvParameters)
 {
     portTickType xLastWakeTime;
     portBASE_TYPE xStatus;
+    int x;
+    t_LCD_data lcd_data;
 
     (void)pvParameters;
     xLastWakeTime = xTaskGetTickCount();
-    xLCD_Queue = xQueueCreate(20, sizeof(int));
 
     for (;;)
     {
-	vTaskDelayUntil(&xLastWakeTime, 200);
-	xStatus = uxQueueMessagesWaiting(xLCD_Queue);
+        xStatus = xQueueReceive(xLCD_Queue, &lcd_data, portMAX_DELAY);
 	if (xStatus != pdPASS)
 	{
             while(1){};
@@ -64,10 +64,38 @@ void vTask_LCD(void *pvParameters)
             one item! */
             //printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
 	}
-	//printf("T3 =>Q [%d]\n", value[a]);
+        switch (lcd_data.base)
+        {
+            case 0:
+                Lcd_1602_display_dec(lcd_data.x, lcd_data.y, lcd_data.value);
+                break;
+            case 1:
+                Lcd_1602_display_hex(lcd_data.x, lcd_data.y, lcd_data.value);
+                break;       
+            default:
+                while(1){};
+                break;               
+        }
     }
 }
 
+static t_LCD_data xlcd_data;
+
+portBASE_TYPE LCD_Show(int x, int y, int value, int base)
+{
+    portBASE_TYPE xStatus;
+
+    xlcd_data.x = x;
+    xlcd_data.y = y;
+    xlcd_data.value = value;
+    xlcd_data.base = base;
+    xStatus = xQueueSendToBack(xLCD_Queue, &xlcd_data, 0);
+    if (xStatus != pdPASS)
+    {
+        while(1){};
+    }
+    return xStatus;
+}
 
 /*
 LiquidCrystal_I2C lcd(0x4E,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -126,7 +154,7 @@ static char *utoa(unsigned value, char *digits, int base)
 {
     char *s, *p;
 
-    s = "0123456789abcdefghijklmnopqrstuvwxyz"; /* don't care if s is in
+    s = "0123456789ABCDEFghijklmnopqrstuvwxyz"; /* don't care if s is in
 
                                                  * read-only memory
                                                  */
@@ -199,7 +227,7 @@ static void Lcd_1602_pulseEnable(int _data)
 	Lcd_1602_expanderWrite(_data | En);	// En high
 	delay_ms(1);		// enable pulse must be >450ns
 	Lcd_1602_expanderWrite(_data & ~En);	// En low
-	delay_ms(5);		// commands need > 37us to settle
+	delay_ms(4);		// commands need > 37us to settle
 }
 
 static void Lcd_1602_write4bits(int value)
@@ -464,9 +492,9 @@ void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
 
     Lcd_1602_backlight(LCD_FUNC_ON);
     //Lcd_1602_autoscroll(LCD_FUNC_ON);
-    Lcd_1602_display_string(0, 0, str, strlen(str));
+    //Lcd_1602_display_string(0, 0, str, strlen(str));
     
-    Lcd_1602_display_hex(0,1,255);
-    Lcd_1602_display_dec(5,1,3000);
+    //Lcd_1602_display_hex(0,1,255);
+    //Lcd_1602_display_dec(5,1,3000);
 
 }

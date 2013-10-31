@@ -59,8 +59,6 @@
 #define Rw 0b00000010  // Read/Write bit
 #define Rs 0b00000001  // Register select bit
 
-extern xQueueHandle xLCD_Queue;
-
 void Lcd_1602_clear(void);
 void Lcd_1602_home(void);
 void Lcd_1602_set_cursor(int col, int row);
@@ -76,6 +74,14 @@ void Lcd_1602_display_string(int x,int y, char *data, int n);
 void Lcd_1602_display_dec(int x,int y, int value);
 void Lcd_1602_display_hex(int x,int y, int value);
 void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize);
+
+typedef struct {
+    int x,y,value,base;
+} t_LCD_data;
+
+extern xQueueHandle xLCD_Queue;
+void vTask_LCD(void *pvParameters);
+portBASE_TYPE LCD_Show(int x, int y, int value, int base);
 
 #endif
 
