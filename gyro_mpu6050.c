@@ -65,12 +65,18 @@ void Gyro_i2c_write(UINT8 ControlByte, UINT8 LowAdd, UINT8 data)
 	StopI2C();				//Initiate Stop Condition
 }
 
+static int cal_gyro_x, cal_gyro_y, cal_gyro_z;
+static int cal_acc_x, cal_acc_y, cal_acc_z;
+
 //**************************************
 //初始化MPU6050
 //**************************************
 UINT8 Gyro_MPU6050_Init(void)
 {
     UINT8 id;
+
+    cal_gyro_x = cal_gyro_y = cal_gyro_z = 0;
+    cal_acc_x = cal_acc_y = cal_acc_z = 0;
 
     Gyro_i2c_write(Gyro_MPU6050_Address, PWR_MGMT_1, 0x80);
     delay_ms(100);
@@ -93,7 +99,7 @@ UINT8 Gyro_MPU6050_Init(void)
 //合成數據
 //**************************************
 // UINT8 aaa;
-UINT16 Gyro_MPU6050_GetData(UINT8 REG_Addr)
+int Gyro_MPU6050_GetData(UINT8 REG_Addr)
 {
     	UINT8 data_h,data_l,id;
         UINT16 data;
@@ -110,32 +116,78 @@ UINT16 Gyro_MPU6050_GetData(UINT8 REG_Addr)
         data = (UINT16)data_h;
         data = data << 8;
         data = data + (UINT16)data_l;
-	return data;
+
+ 	return (int)data;
+
+}
+
+int Gyro_MPU6050_Cal(void)
+{
+    int i;
+    float x;
+    for (i =0; i< 10; i++)
+    {
+        x += Gyro_MPU6050_GetData(GYRO_XOUT_H);
+    }
+    cal_gyro_x = (int)(x / 10);
+    cal_gyro_x = cal_gyro_x * -1;
+
+    for (i =0; i< 10; i++)
+    {
+        x += Gyro_MPU6050_GetData(GYRO_YOUT_H);
+    }
+    cal_gyro_y = (int)(x / 10);
+    cal_gyro_y = cal_gyro_y * -1;
+
+    for (i =0; i< 10; i++)
+    {
+        x += Gyro_MPU6050_GetData(GYRO_ZOUT_H);
+    }
+    cal_gyro_z = (int)(x / 10);
+    cal_gyro_z = cal_gyro_z * -1;
 
 }
 
 void vTask_Gyro_MPU6050(void *pvParameters )
 {
-    UINT16 acc_x, acc_y, acc_z, temp;
-    UINT16 gyro_x, gyro_y, gyro_z;
+    int acc_x, acc_y, acc_z, temp;
+    int gyro_x, gyro_y, gyro_z;
     portTickType xLastWakeTime;
     t_LCD_data lcd_data;
     portBASE_TYPE xStatus;
 
+    temp = 0;
     Gyro_MPU6050_Init();
+    //Gyro_MPU6050_Cal();
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil(&xLastWakeTime, 500);
+        vTaskDelayUntil(&xLastWakeTime, 200);
+#if 0
+        temp ++;
+        if (temp > 100)
+        {
+            Gyro_MPU6050_Cal();
+            temp = 0;
+        }
+#endif
+        gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H) + cal_gyro_x;
+        LCD_Show_Value(0, 0, gyro_x, 10, 5);
 
-        gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H);
-        LCD_Show(0, 0, gyro_x, 1);
+        gyro_y = Gyro_MPU6050_GetData(GYRO_YOUT_H) + cal_gyro_y;
+        LCD_Show_Value(5, 0, gyro_y, 10, 5);
 
-        gyro_y = Gyro_MPU6050_GetData(GYRO_YOUT_H);
-        LCD_Show(6, 0, gyro_y, 1);
+        gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H) + cal_gyro_z;
+        LCD_Show_Value(10, 0, gyro_z, 10, 5);
 
-        gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H);
-        LCD_Show(12, 0, gyro_z, 1);
+        acc_x = Gyro_MPU6050_GetData(ACCEL_XOUT_H) / 100;
+        LCD_Show_Value(0, 1, acc_x, 10, 5);
+
+        acc_y = Gyro_MPU6050_GetData(ACCEL_YOUT_H) / 100;
+        LCD_Show_Value(5, 1, acc_y, 10, 5);
+
+        acc_z = Gyro_MPU6050_GetData(ACCEL_ZOUT_H) / 100;
+        LCD_Show_Value(10, 1, acc_z, 10, 5);
 
     }
 }

@@ -204,9 +204,9 @@ int main( void )
 
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
-    xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_LCD, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 4, NULL );
     xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
 
@@ -247,7 +247,8 @@ static void vTask_test3(void *pvParameters)
                     lcd_data.x = 0;
                     lcd_data.y = 1;
                     lcd_data.value = value[a];
-                    lcd_data.base = 0; //dec
+                    lcd_data.base = 10; //dec
+                    lcd_data.lengh = 4; //dec
 
                     xStatus = xQueueSendToBack(xLCD_Queue, &lcd_data, 0);
                     if (xStatus != pdPASS)
@@ -286,7 +287,7 @@ static void vTask_test5(void *pvParameters)
 		//xStatus = uxQueueMessagesWaiting(xQueue);
 		//Lcd_1602_display_dec(5, 1, 33);
 
-                LCD_Show(5, 1, value[a], 0);
+                LCD_Show_Value(5, 1, value[a], 10, 4);
 
                 if (a < 9)
                     a++;

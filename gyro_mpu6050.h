@@ -36,7 +36,7 @@ UINT8 Gyro_MPU6050_Init(void);
 //**************************************
 //合成數據
 //**************************************
-UINT16 Gyro_MPU6050_GetData(UINT8 REG_Addr);
+int Gyro_MPU6050_GetData(UINT8 REG_Addr);
 void vTask_Gyro_MPU6050(void *pvParameters );
 
 #endif

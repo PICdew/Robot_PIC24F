@@ -64,24 +64,13 @@ void vTask_LCD(void *pvParameters)
             one item! */
             //printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
 	}
-        switch (lcd_data.base)
-        {
-            case 0:
-                Lcd_1602_display_dec(lcd_data.x, lcd_data.y, lcd_data.value);
-                break;
-            case 1:
-                Lcd_1602_display_hex(lcd_data.x, lcd_data.y, lcd_data.value);
-                break;       
-            default:
-                while(1){};
-                break;               
-        }
+        Lcd_1602_display_value(lcd_data.x, lcd_data.y, lcd_data.value, lcd_data.base, lcd_data.lengh);
     }
 }
 
 static t_LCD_data xlcd_data;
 
-portBASE_TYPE LCD_Show(int x, int y, int value, int base)
+portBASE_TYPE LCD_Show_Value(int x, int y, int value, int base, int n)
 {
     portBASE_TYPE xStatus;
 
@@ -89,6 +78,8 @@ portBASE_TYPE LCD_Show(int x, int y, int value, int base)
     xlcd_data.y = y;
     xlcd_data.value = value;
     xlcd_data.base = base;
+    xlcd_data.lengh = n;
+
     xStatus = xQueueSendToBack(xLCD_Queue, &xlcd_data, 0);
     if (xStatus != pdPASS)
     {
@@ -166,10 +157,8 @@ static char *utoa(unsigned value, char *digits, int base)
         digits[0] = s[value];
         digits[1] = '\0';
     } else {
-        for (p = utoa(value / ((unsigned)base), digits, base);
-             *p;
-             p++);
-        utoa( value % ((unsigned)base), p, base);
+        for (p = utoa(value / ((unsigned)base), digits, base); *p; p++);
+            utoa( value % ((unsigned)base), p, base);
     }
     return digits;
 }
@@ -191,8 +180,12 @@ static char *itoa(char *digits, int value, int base)
     if (value < 0) {
         *d++ = '-';
         u = -((unsigned)value);
-    } else
+    }
+    else
+    {
+        *d++ = ' ';
         u = value;
+    }
     utoa(u, d, base);
     return digits;
 }
@@ -410,23 +403,22 @@ void Lcd_1602_display_string(int x,int y,char *data, int n)
 	}
 }
 
-void Lcd_1602_display_dec(int x,int y, int value)
+void Lcd_1602_display_value(int x,int y, int value, int base, int n)
 {
-    char dis[8];
-
+    char dis[10];
+    int l;
     //Lcd_printf(dis, value);         //轉換數據顯示
-    itoa(dis, value, 10);
-    Lcd_1602_display_string(x, y, dis, strlen(dis));	//啟始列，行，顯示數組，顯示長度
+    itoa(dis, value, base);
+    l = strlen(dis);
+    if (l < n)
+    {
+        int i;
+        for (i = l; i < n; i++)
+            dis[i] = ' ';
+    }
+    Lcd_1602_display_string(x, y, dis, n);	//啟始列，行，顯示數組，顯示長度
 }
 
-void Lcd_1602_display_hex(int x,int y, int value)
-{
-    char dis[8];
-
-    //Lcd_printf(dis, value);         //轉換數據顯示
-    itoa(dis, value, 16);
-    Lcd_1602_display_string(x, y, dis, strlen(dis));	//啟始列，行，顯示數組，顯示長度
-}
 
 /// High level functions
  //Lcd_1602_Init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
