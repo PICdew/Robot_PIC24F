@@ -76,6 +76,7 @@ void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize);
 
 typedef struct {
     int x,y,value,base,lengh;
+    char *string;
 } t_LCD_data;
 
 extern xQueueHandle xLCD_Queue;

@@ -64,7 +64,14 @@ void vTask_LCD(void *pvParameters)
             one item! */
             //printf("xxxxxxxxxxxxx Could not send to the queue.\r\n");
 	}
-        Lcd_1602_display_value(lcd_data.x, lcd_data.y, lcd_data.value, lcd_data.base, lcd_data.lengh);
+        if (lcd_data.base == 0)
+        {
+            Lcd_1602_display_string(lcd_data.x, lcd_data.y, lcd_data.string, lcd_data.lengh);
+        }
+        else
+        {
+            Lcd_1602_display_value(lcd_data.x, lcd_data.y, lcd_data.value, lcd_data.base, lcd_data.lengh);
+        }
     }
 }
 
@@ -88,37 +95,24 @@ portBASE_TYPE LCD_Show_Value(int x, int y, int value, int base, int n)
     return xStatus;
 }
 
-/*
-LiquidCrystal_I2C lcd(0x4E,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-void setup()
+portBASE_TYPE LCD_Show_String(int x, int y, char* s, int n)
 {
-  lcd.init();                      // initialize the lcd
+    portBASE_TYPE xStatus;
 
-  // Print a message to the LCD.
-  lcd.backlight();
-  lcd.print("Hello, world!");
-}
-*/
+    xlcd_data.x = x;
+    xlcd_data.y = y;
+    xlcd_data.string = s;
+    xlcd_data.base = 0;
+    xlcd_data.lengh = n;
 
-#if 0
-//****************************************
-//整數轉字符串
-//****************************************
-void Lcd_printf(int *s,int temp_data)
-{
-	if(temp_data<0)
-	{
-		temp_data=-temp_data;
-		*s='-';
-	}
-	else *s=' ';
-	*++s =temp_data/100+0x30;
-	temp_data=temp_data%100;     //取余運算
-	*++s =temp_data/10+0x30;
-	temp_data=temp_data%10;      //取余運算
-	*++s =temp_data+0x30;
+    xStatus = xQueueSendToBack(xLCD_Queue, &xlcd_data, 0);
+    if (xStatus != pdPASS)
+    {
+        while(1){};
+    }
+    return xStatus;
 }
-#endif
+
 /* atoi: convert s to an integer
  *
  * Here's the easy way:
@@ -490,3 +484,36 @@ void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
     //Lcd_1602_display_dec(5,1,3000);
 
 }
+
+
+/*
+LiquidCrystal_I2C lcd(0x4E,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+void setup()
+{
+  lcd.init();                      // initialize the lcd
+
+  // Print a message to the LCD.
+  lcd.backlight();
+  lcd.print("Hello, world!");
+}
+*/
+
+#if 0
+//****************************************
+//整數轉字符串
+//****************************************
+void Lcd_printf(int *s,int temp_data)
+{
+	if(temp_data<0)
+	{
+		temp_data=-temp_data;
+		*s='-';
+	}
+	else *s=' ';
+	*++s =temp_data/100+0x30;
+	temp_data=temp_data%100;     //取余運算
+	*++s =temp_data/10+0x30;
+	temp_data=temp_data%10;      //取余運算
+	*++s =temp_data+0x30;
+}
+#endif
