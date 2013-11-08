@@ -21,7 +21,12 @@
 #include "lcd_i2c_1602.h"
 #include "gyro_mpu6050.h"
 
-
+/*
+ *
+ *   Gyro i2c interface, Read/Write
+ *
+ *
+ */
 UINT8 Gyro_i2c_read(UINT8 ControlByte, UINT8 Address)
 {
     UINT8 Data;
@@ -119,7 +124,7 @@ UINT8 Gyro_MPU6050_Init(void)
 }
 
 //**************************************
-//合成數據
+// HB+LB 合成數據
 //**************************************
 // UINT8 aaa;
 int Gyro_MPU6050_GetData(UINT8 REG_Addr)
@@ -144,6 +149,12 @@ int Gyro_MPU6050_GetData(UINT8 REG_Addr)
 
 }
 
+
+/*
+
+ caliabrate the Gyro value
+
+ */
 int Gyro_MPU6050_Offset(void)
 {
 
@@ -158,7 +169,9 @@ int Gyro_MPU6050_Offset(void)
 }
 
 
-
+/*
+ Task entry point
+ */
 void vTask_Gyro_MPU6050(void *pvParameters )
 {
     int acc_x, acc_y, acc_z, temp;

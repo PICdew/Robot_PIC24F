@@ -42,7 +42,9 @@ int _numlines;
 int _backlightval;
 
 xQueueHandle xLCD_Queue;
-
+/*
+ LCD task entry point
+ */
 void vTask_LCD(void *pvParameters)
 {
     portTickType xLastWakeTime;
@@ -77,6 +79,11 @@ void vTask_LCD(void *pvParameters)
 
 static t_LCD_data xlcd_data;
 
+/*
+ Show dec/hex in LCD
+ * base: 2/4/8/16/32/64
+ * n: nomber of chars
+ */
 portBASE_TYPE LCD_Show_Value(int x, int y, int value, int base, int n)
 {
     portBASE_TYPE xStatus;
@@ -95,6 +102,10 @@ portBASE_TYPE LCD_Show_Value(int x, int y, int value, int base, int n)
     return xStatus;
 }
 
+/*
+ Show string in LCD
+ n: # of chars
+ */
 portBASE_TYPE LCD_Show_String(int x, int y, char* s, int n)
 {
     portBASE_TYPE xStatus;
@@ -135,6 +146,9 @@ static int atoi(char *s)
     return sign * n;
 }
 
+/*
+ *  value to char
+ */
 static char *utoa(unsigned value, char *digits, int base)
 {
     char *s, *p;
@@ -157,6 +171,9 @@ static char *utoa(unsigned value, char *digits, int base)
     return digits;
 }
 
+/*
+ int to ascii
+ */
 static char *itoa(char *digits, int value, int base)
 {
     char *d;
