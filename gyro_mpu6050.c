@@ -187,7 +187,7 @@ void vTask_Gyro_MPU6050(void *pvParameters )
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil(&xLastWakeTime, 200);
+        vTaskDelayUntil(&xLastWakeTime, 5000);
 #if 1
         temp ++;
         if (temp > 100)

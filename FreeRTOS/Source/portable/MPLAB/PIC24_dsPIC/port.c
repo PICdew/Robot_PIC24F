@@ -340,7 +340,7 @@ const unsigned long ulCompareMatch = ( ( configCPU_CLOCK_HZ / portTIMER_PRESCALE
 void vPortEnterCritical( void )
 {
 	portDISABLE_INTERRUPTS();
-	uxCriticalNesting++;
+uxCriticalNesting++;
 }
 /*-----------------------------------------------------------*/
 
