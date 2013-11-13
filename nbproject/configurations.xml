@@ -35,6 +35,7 @@
       <itemPath>gyro_mpu6050.c</itemPath>
       <itemPath>sonar_hcsr04.c</itemPath>
       <itemPath>cn_intr.c</itemPath>
+      <itemPath>moter_l298n.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

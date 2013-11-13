@@ -1,0 +1,45 @@
+Pin define document
+
+<<I2C: LCD/Gyro >>
+J8-RA2(9)/RA3(8)
+SCL => [J8]RA2(9)-SCL2/CN35/RA2(58)
+SDA => [J8]RA3(8)-DA2/CN36/RA3(59)
+VCC => [J8]VCC3V3(11)
+GND => [J8]GND(12)
+=====================================================
+
+<<Moter>>
+L298N(IN1) => [J8]RA4(7)-TDI/CN37/RA4(60)
+L298N(IN2) => [J8]RA5(6)-TDO/CN38/RA5(61)
+L298N(IN3) => [J8]RA14(5)-RPI36/SCL1/CN43/RA14(66)
+L298N(IN4) => [J8]RA15(4)-RPI35/SDA1/CN44/RA15(67)
+12V => 9V (BAT/Adaptor)
+GND => GND
+=====================================================
+
+<<Sonar>>
+VCC(1)  => [J8]VCC5V0(10)
+TRIG(2) => [J8]RD8(3) -RP2/DMLN/RTCC/CN53/RD8(68) 
+ECHO(3) => [J8]RD9(2) -RP4/DPLN/CN54/RD9(69)
+GND(4)  => [J8]GND(12)
+======================================================
+
+<<SG90 Servo_1>>
+Brown(1) => [J8]GND(12)
+Red(2)   => [L298N]5V0(output)/from L298N(12V)
+Yellow(3)=> [J8]
+<<SG90 Servo_2>>
+Brown(1) => [J8]GND(12)
+Red(2)   => [L298N]5V0(output)/from L298N(12V)
+Yellow(3)=> [J8]
+=======================================================
+
+<<IR_recriver>>
+VCC(1)   => [J8]VCC3V3(11)
+GND(2)   => [J8]GND(12)
+Recv(3)  => [J7]RF8(1)-RP15/CN74/RF8(53)
+=======================================================
+
+
+
+

@@ -112,6 +112,8 @@
 #include "sonar_hcsr04.h"
 #include "cn_intr.h"
 
+#include "moter_l298n.h"
+
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
 #if defined __C30__ || defined __XC16__
@@ -186,6 +188,8 @@ static void vTask_test2 (void *pvParameters );
 static void vTask_test3 (void *pvParameters );
 static void vTask_test4 (void *pvParameters );
 static void vTask_test5 (void *pvParameters );
+static void vTask_test6 (void *pvParameters );
+
 
 /****************************************************************************/
 
@@ -212,9 +216,10 @@ int main( void )
     //xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
     //xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_LCD, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 5, NULL );
-    //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 3, NULL );
+    xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
 
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
@@ -225,6 +230,44 @@ int main( void )
     /* Will only reach here if there is insufficient heap available to start
     the scheduler. */
     return 0;
+}
+
+static void vTask_test6(void *pvParameters)
+{
+	unsigned char a;
+	portTickType xLastWakeTime;
+	(void)pvParameters;
+
+	a = 0;
+        Motor_L298N_Init();
+	xLastWakeTime = xTaskGetTickCount();
+	for (;;)
+	{
+            vTaskDelayUntil(&xLastWakeTime, 3000);
+            switch (a)
+            {
+                case 0:
+                    Motor_Dir_Set(MOTOR_L, MOTOR_CW);
+                    Motor_Dir_Set(MOTOR_R, MOTOR_CW);
+                    break;
+                case 1:
+                    Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+                    Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
+                    break;
+                case 2:
+                    Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+                    Motor_Dir_Set(MOTOR_R, MOTOR_CW);
+                    break;
+                case 3:
+                    Motor_Dir_Set(MOTOR_L, MOTOR_CW);
+                    Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
+                    break;
+            }
+            a++;
+            if (a > 3)
+                a = 0;
+
+        }
 }
 
 static void vTask_test3(void *pvParameters)
