@@ -52,19 +52,17 @@ unsigned char InitI2C(void)
 	//Consult the dSPIC Data Sheet for information on how to calculate the
 	//Baud Rate.
 
+        // based on the datasheet of PCF8754(LCD module), the Max CLK should be 100kHz
     	//I2C2BRG = 0x9;   //400k;
 	I2C2BRG = 0x27;   //100k;
         //I2C2BRG = 0x4E;   //50k;
 
 	//Now we will initialise the I2C peripheral for Master Mode, No Slew Rate
 	//Control, and leave the peripheral switched off.
-
 	I2C2CON = 0x1200;
-
 	I2C2RCV = 0x0000;
 	I2C2TRN = 0x0000;
 	//Now we can enable the peripheral
-
 	I2C2CON = 0x9200;
 }
 

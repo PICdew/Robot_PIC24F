@@ -60,7 +60,8 @@ void vTask_LCD(void *pvParameters)
         xStatus = xQueueReceive(xLCD_Queue, &lcd_data, portMAX_DELAY);
 	if (xStatus != pdPASS)
 	{
-            while(1){};
+            LED_ERR(0x5);
+            //while(1){};
             /* The send operation could not complete because the queue was full -
             this must be an error as the queue should never contain more than
             one item! */
@@ -229,10 +230,13 @@ static void Lcd_1602_expanderWrite(int _data)
 static void Lcd_1602_pulseEnable(int _data)
 {
 	Lcd_1602_expanderWrite(_data | En);	// En high
-	delay_ms(1);		// enable pulse must be >450ns
+	// delay_ms(1);
+        delay_us(450);		// enable pulse must be >450ns
 	Lcd_1602_expanderWrite(_data & ~En);	// En low
-	delay_ms(4);		// commands need > 37us to settle
+	//delay_ms(4);		// commands need > 37us to settle
+        delay_us(37);
 }
+
 
 static void Lcd_1602_write4bits(int value)
 {
@@ -468,7 +472,7 @@ void Lcd_1602_init(int lcd_Addr,int lcd_cols,int lcd_rows, int dotsize)
     delay_ms(5); // wait min 4.1ms
     // second try
     Lcd_1602_write4bits(0x03 << 4);
-    delay_ms(1); // wait min 100us
+    delay_us(100); // wait min 100us
     // third go!
     Lcd_1602_write4bits(0x03 << 4);
     // finally, set to 4-bit interface

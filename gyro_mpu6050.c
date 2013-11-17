@@ -158,7 +158,7 @@ int Gyro_MPU6050_GetData(UINT8 REG_Addr)
 int Gyro_MPU6050_Offset(void)
 {
 
-    delay_ms(2000);
+    //delay_ms(2000);
     cal_gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H) * (-1);
     cal_gyro_y = Gyro_MPU6050_GetData(GYRO_YOUT_H) * (-1);
     cal_gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H) * (-1);
@@ -183,12 +183,12 @@ void vTask_Gyro_MPU6050(void *pvParameters )
 
     temp = 0;
     Gyro_MPU6050_Init();
-    Gyro_MPU6050_Offset();
+    //Gyro_MPU6050_Offset();
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil(&xLastWakeTime, 5000);
-#if 1
+        vTaskDelayUntil(&xLastWakeTime, 500);
+#if 0
         temp ++;
         if (temp > 100)
         {
@@ -196,6 +196,7 @@ void vTask_Gyro_MPU6050(void *pvParameters )
             temp = 0;
         }
 #endif
+#if 0
         x = 1;
         LCD_Show_String(0, 0, "G", 1);
         gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H) + cal_gyro_x;
@@ -208,6 +209,7 @@ void vTask_Gyro_MPU6050(void *pvParameters )
         x += 5;
         gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H) + cal_gyro_z;
         LCD_Show_Value(x, 0, gyro_z, 10, 5);
+#endif
 
         x = 1;
         LCD_Show_String(0, 1, "A", 1);

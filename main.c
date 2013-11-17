@@ -189,11 +189,15 @@ static void vTask_test3 (void *pvParameters );
 static void vTask_test4 (void *pvParameters );
 static void vTask_test5 (void *pvParameters );
 static void vTask_test6 (void *pvParameters );
+static void vTask_test7 (void *pvParameters );
+
 
 
 /****************************************************************************/
 
 xQueueHandle xTest_Queue;
+
+int PwmInit(void);
 
 #define vTask_STACK_SIZE    (configMINIMAL_STACK_SIZE * 5)
 /*
@@ -211,15 +215,17 @@ int main( void )
     xLCD_Queue = xQueueCreate(50, sizeof(t_LCD_data));
     xSonar_Queue = xQueueCreate(20, sizeof(t_CN_INT_data));
 
+    //PwmInit();
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
     //xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_test7, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
-    //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
+    xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
 
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
@@ -243,7 +249,7 @@ static void vTask_test6(void *pvParameters)
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
-            vTaskDelayUntil(&xLastWakeTime, 3000);
+            vTaskDelayUntil(&xLastWakeTime, 1000);
             switch (a)
             {
                 case 0:
@@ -267,6 +273,56 @@ static void vTask_test6(void *pvParameters)
             if (a > 3)
                 a = 0;
 
+        }
+}
+
+static void vTask_test7(void *pvParameters)
+{
+	unsigned char a;
+	portTickType xLastWakeTime;
+        int distance, n, m;
+	(void)pvParameters;
+
+	a = 0;
+        n = m = 0;
+        Motor_L298N_Init();
+	xLastWakeTime = xTaskGetTickCount();
+	for (;;)
+	{
+            //vTaskDelayUntil(&xLastWakeTime, 600);
+            distance = Sonar_HCSR04_Get_Distance();
+            LCD_Show_Value(2, 0, distance, 10, 6);
+            if (distance < 8)
+            {
+                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+                vTaskDelay(2000);
+                Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+                Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
+                vTaskDelay(200);
+                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+                vTaskDelay(3000);
+                if (a)
+                {
+                    Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+                    Motor_Dir_Set(MOTOR_R, MOTOR_CW);
+                }
+                else
+                {
+                    Motor_Dir_Set(MOTOR_L, MOTOR_CW);
+                    Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
+                }
+                vTaskDelay(150);
+                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+            }
+            else
+            {
+                Motor_Dir_Set(MOTOR_L, MOTOR_CW);
+                Motor_Dir_Set(MOTOR_R, MOTOR_CW);
+            }
+            a = 1 - a;
         }
 }
 

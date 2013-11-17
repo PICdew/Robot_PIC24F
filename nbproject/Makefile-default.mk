@@ -45,17 +45,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=FreeRTOS/Source/portable/MemMang/heap_1.c FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c hook.c lcd_i2c_1602.c i2c_func.c gyro_mpu6050.c sonar_hcsr04.c cn_intr.c moter_l298n.c
+SOURCEFILES_QUOTED_IF_SPACED=FreeRTOS/Source/portable/MemMang/heap_1.c FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c hook.c lcd_i2c_1602.c i2c_func.c gyro_mpu6050.c sonar_hcsr04.c cn_intr.c moter_l298n.c pwm_func.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/hook.o ${OBJECTDIR}/lcd_i2c_1602.o ${OBJECTDIR}/i2c_func.o ${OBJECTDIR}/gyro_mpu6050.o ${OBJECTDIR}/sonar_hcsr04.o ${OBJECTDIR}/cn_intr.o ${OBJECTDIR}/moter_l298n.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o.d ${OBJECTDIR}/FreeRTOS/Source/croutine.o.d ${OBJECTDIR}/FreeRTOS/Source/list.o.d ${OBJECTDIR}/FreeRTOS/Source/queue.o.d ${OBJECTDIR}/FreeRTOS/Source/tasks.o.d ${OBJECTDIR}/FreeRTOS/Source/timers.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/hook.o.d ${OBJECTDIR}/lcd_i2c_1602.o.d ${OBJECTDIR}/i2c_func.o.d ${OBJECTDIR}/gyro_mpu6050.o.d ${OBJECTDIR}/sonar_hcsr04.o.d ${OBJECTDIR}/cn_intr.o.d ${OBJECTDIR}/moter_l298n.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/hook.o ${OBJECTDIR}/lcd_i2c_1602.o ${OBJECTDIR}/i2c_func.o ${OBJECTDIR}/gyro_mpu6050.o ${OBJECTDIR}/sonar_hcsr04.o ${OBJECTDIR}/cn_intr.o ${OBJECTDIR}/moter_l298n.o ${OBJECTDIR}/pwm_func.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o.d ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o.d ${OBJECTDIR}/FreeRTOS/Source/croutine.o.d ${OBJECTDIR}/FreeRTOS/Source/list.o.d ${OBJECTDIR}/FreeRTOS/Source/queue.o.d ${OBJECTDIR}/FreeRTOS/Source/tasks.o.d ${OBJECTDIR}/FreeRTOS/Source/timers.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/hook.o.d ${OBJECTDIR}/lcd_i2c_1602.o.d ${OBJECTDIR}/i2c_func.o.d ${OBJECTDIR}/gyro_mpu6050.o.d ${OBJECTDIR}/sonar_hcsr04.o.d ${OBJECTDIR}/cn_intr.o.d ${OBJECTDIR}/moter_l298n.o.d ${OBJECTDIR}/pwm_func.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/hook.o ${OBJECTDIR}/lcd_i2c_1602.o ${OBJECTDIR}/i2c_func.o ${OBJECTDIR}/gyro_mpu6050.o ${OBJECTDIR}/sonar_hcsr04.o ${OBJECTDIR}/cn_intr.o ${OBJECTDIR}/moter_l298n.o
+OBJECTFILES=${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.o ${OBJECTDIR}/FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.o ${OBJECTDIR}/FreeRTOS/Source/croutine.o ${OBJECTDIR}/FreeRTOS/Source/list.o ${OBJECTDIR}/FreeRTOS/Source/queue.o ${OBJECTDIR}/FreeRTOS/Source/tasks.o ${OBJECTDIR}/FreeRTOS/Source/timers.o ${OBJECTDIR}/main.o ${OBJECTDIR}/hook.o ${OBJECTDIR}/lcd_i2c_1602.o ${OBJECTDIR}/i2c_func.o ${OBJECTDIR}/gyro_mpu6050.o ${OBJECTDIR}/sonar_hcsr04.o ${OBJECTDIR}/cn_intr.o ${OBJECTDIR}/moter_l298n.o ${OBJECTDIR}/pwm_func.o
 
 # Source Files
-SOURCEFILES=FreeRTOS/Source/portable/MemMang/heap_1.c FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c hook.c lcd_i2c_1602.c i2c_func.c gyro_mpu6050.c sonar_hcsr04.c cn_intr.c moter_l298n.c
+SOURCEFILES=FreeRTOS/Source/portable/MemMang/heap_1.c FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/portasm_PIC24.S FreeRTOS/Source/portable/MPLAB/PIC24_dsPIC/port.c FreeRTOS/Source/croutine.c FreeRTOS/Source/list.c FreeRTOS/Source/queue.c FreeRTOS/Source/tasks.c FreeRTOS/Source/timers.c main.c hook.c lcd_i2c_1602.c i2c_func.c gyro_mpu6050.c sonar_hcsr04.c cn_intr.c moter_l298n.c pwm_func.c
 
 
 CFLAGS=
@@ -184,6 +184,13 @@ ${OBJECTDIR}/moter_l298n.o: moter_l298n.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  moter_l298n.c  -o ${OBJECTDIR}/moter_l298n.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/moter_l298n.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/moter_l298n.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/pwm_func.o: pwm_func.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/pwm_func.o.d 
+	@${RM} ${OBJECTDIR}/pwm_func.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  pwm_func.c  -o ${OBJECTDIR}/pwm_func.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/pwm_func.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/pwm_func.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
 ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang/heap_1.o: FreeRTOS/Source/portable/MemMang/heap_1.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR}/FreeRTOS/Source/portable/MemMang 
@@ -289,6 +296,13 @@ ${OBJECTDIR}/moter_l298n.o: moter_l298n.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/moter_l298n.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  moter_l298n.c  -o ${OBJECTDIR}/moter_l298n.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/moter_l298n.o.d"      -g -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/moter_l298n.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/pwm_func.o: pwm_func.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} ${OBJECTDIR} 
+	@${RM} ${OBJECTDIR}/pwm_func.o.d 
+	@${RM} ${OBJECTDIR}/pwm_func.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  pwm_func.c  -o ${OBJECTDIR}/pwm_func.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/pwm_func.o.d"      -g -omf=elf -ffunction-sections -fdata-sections -mlarge-data -O0 -I"FreeRTOS/Source/include" -I"." -DMPLAB_PIC24_PORT -msmart-io=1 -Wall -msfr-warn=off
+	@${FIXDEPS} "${OBJECTDIR}/pwm_func.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 
