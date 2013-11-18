@@ -6,6 +6,7 @@
 //****************************************
 /* Standard includes. */
 #include <stdio.h>
+#include <GenericTypeDefs.h>
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
@@ -21,6 +22,8 @@
 #include "moter_l298n.h"
 
 
+static BYTE ReadPOT(void);
+
 
 /* PWM example
   ** Assign OC1 to be output on RF5 //RF13
@@ -28,10 +31,7 @@
  *  PWM Period = [(PR2) + 1] * 2 * TOSC * (TMR2 Prescale Value)
   */
   #define  PWM_PERIOD 62500
-  void
-  PwmInit(
-      void
-     )
+  void PwmInit(void)
   {
       int i;
       //CLKDIV =  0; /* set for default clock operations Fcyc = 4MHz */
@@ -55,45 +55,42 @@
       //OC1CON1 = 0x0000;
       //OC1CON2 = 0x0000;
 
-         // config timer2
+         // config timer3
     T3CON = 0x00; //Stops the Timer3 and reset control reg.
     TMR3 = 0x00; //Clear contents of the timer register
     PR3 = 0xFFFF; //Load the Period register with the value 0xFFFF
 
     /*
      *  bit 5-4 TCKPS<1:0>: Timerx Input Clock Prescale Select bits
-     *  11 = 1:256 prescale value
-     *  10 = 1:64 prescale value
-     *  01 = 1:8 prescale value
-     *  00 = 1:1 prescale value
-     * set timer3 as 1:8 Prescare value, Fcy=8MHz/2=4MHz=0.25us, 1:64= 0.25*64 = 16us
-     *
+     *  11 = 1:256 prescale value, 16us
+     *  10 = 1:64 prescale value, 4us
+     *  01 = 1:8 prescale value, 0.5us
+     *  00 = 1:1 prescale value, 0.0625us,
+     *   Fcy=16MHz=0.0625us
      *
      */
 
      T3CONbits.TCKPS = 0x0;
 
-       /* configure PWM */
-      OC1CON2 = 0x001F;   /* Sync with This OC module                               */
-      OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
+     /* configure PWM */
+     OC1CON2 = 0x001F;   /* Sync with This OC module                               */
+     OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
 
-      /* enable the PWM */
-      OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
+     /* enable the PWM */
+     OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
 
-      /* Make pin RP31(RF13) OC1 (PWM output) */
-      RPOR8bits.RP17R = 18;
+     /* Make pin RP31(RF13) OC1 (PWM output) */
+     RPOR8bits.RP17R = 18;
 
       T3CONbits.TON = 1; //Start Timer3
-      for (i=0; i< 1249; i += 2 )
+      for (;; )
       {
-          int j;
+          BYTE j;
+          j = ReadPOT();
           /* set PWM duty cycle to 50% */
-          OC1R    = i;
+          OC1R    = j;
           OC1RS   = 1249;  /* set the period */
-
-          for (j =0; j<30000; j++)
-              Nop();
-
+          delay_ms(200);
       }
       
       //while(1);
@@ -175,3 +172,47 @@ Changing the value of OC2RS changes the PWM duty cycle.
 OC2RS = (OC2RS<(0x63F -2))?OC2RS + 1: 0x63F + 1; //Increment
 OC2RS = (OC2RS>=1)?OC2RS - 1:0;  //decrement
 #endif
+
+/****************************************************************************
+  Function:
+    BYTE ReadPOT(void)
+
+  Summary:
+    Reads the pot value and returns the percentage of full scale (0-100)
+
+  Description:
+    Reads the pot value and returns the percentage of full scale (0-100)
+
+  Precondition:
+    A/D is initialized properly
+
+  Parameters:
+    None
+
+  Return Values:
+    None
+
+  Remarks:
+    None
+  ***************************************************************************/
+static BYTE ReadPOT(void)
+{
+    WORD_VAL w;
+    DWORD temp;
+
+    AD1CHS = 0x9;           //MUXA uses AN9
+
+    // Get an ADC sample
+    AD1CON1bits.SAMP = 1;           //Start sampling
+    //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
+    delay_ms(10);
+    AD1CON1bits.SAMP = 0;           //Start sampling
+    //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
+    delay_ms(10);
+    while(!AD1CON1bits.DONE);       //Wait for conversion to complete
+    temp = (DWORD)ADC1BUF0;
+    temp = temp * 100;
+    temp = temp/1023;
+
+    return (BYTE)temp;
+}//end ReadPOT
