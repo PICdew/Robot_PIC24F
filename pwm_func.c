@@ -6,7 +6,6 @@
 //****************************************
 /* Standard includes. */
 #include <stdio.h>
-#include <GenericTypeDefs.h>
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
@@ -20,42 +19,143 @@
 #include "lcd_i2c_1602.h"
 
 #include "moter_l298n.h"
+#include "pwm_func.h"
 
 
-static BYTE ReadPOT(void);
+/*
+ * init the pin to ADC convert
+ * POT 10Kohm at pin of RP9/AN9/CN27/RB9
+ */
+void POT_Init(void)
+{
+    AD1PCFGLbits.PCFG9 = 0;
+    AD1CON2bits.VCFG = 0x0;
+    AD1CON3bits.ADCS = 0xFF;
+    AD1CON1bits.SSRC = 0x0;
+    AD1CON3bits.SAMC = 0b10000;
+    AD1CON1bits.FORM = 0b00;
+    AD1CON2bits.SMPI = 0x0;
+    AD1CON1bits.ADON = 1;
+}
+
+/* PWM example
+ ** Assign OC1 to be output on RF5-J7(4)
+ **
+ *  PWM Period = [(PR2) + 1] * 2 * TOSC * (TMR2 Prescale Value)
+ */
+void PwmInit(void)
+{
+    //int i;
+    POT_Init();
+
+    //Make the pin of RP17(RF5) as normal function
+    RPOR8bits.RP17R = 0;
+    // Drive RF5 low and make it an output
+    LATFbits.LATF5 = 0;
+    TRISFbits.TRISF5 = 0;
+
+    // Reset PWM
+    OC1CON1 = 0x0000;
+    OC1CON2 = 0x0000;
+
+    // configure PWM
+    OC1CON2 = 0x001F;   /* Sync with This OC module                               */
+    OC1CON1 = 0x1C08;   /* Clock sourc Fcyc(32Mhz, 0.0625us), trigger mode 1, Mode 0 (disable OC1) */
+    /* enable the PWM */
+    OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
+
+    // Make the pin of RP17(RF5) as OC1 (PWM output)
+    RPOR8bits.RP17R = 18;
+
+    // set the PWM period, 20ms = 320000 * 0.0625us = 20ms
+    OC1RS   = 0xFFFF;
+    for (;; )
+    {
+        unsigned int j;
+        j = POT_Read();
+        if (j>0)
+            j = 0xFFFF / j;
+        // set PWM duty cycle
+        OC1R = j;
+        delay_ms(200);
+    }
+
+    //while(1);
+}
+
+#if 0
+/*
+Find the Period register value for a desired PWM frequency of 2 kHz,
+ where Fosc = 32 MHz  (32 MHz device clock rate) and
+ a Timer3 prescaler setting of 1:1.
+ Tcy = 2/Fosc = 62.5 ns
+ PWM Period   =  1/PWM Frequency = 1/2 kHz = 500 μs
+ PWM Period   = (PR2 + 1) * Tcy * (Timer 3 Prescale Value)  *PWM周期计算公式
+ 500 μs = (PR2 + 1) * 62.5 ns * 1
+ PR2 = 800-1
+*/
+
+void BZOUT(int Period,int rate)
+{
+OC1CON1 = 0;//It is a good practice to clear off the control bits initially
+OC1CON2 = 0;
+
+OC1CON2.SYNCSEL = 13;
+OC1CON2.OCTRIG = 1;
+OC1CON1BITS.OCSIDL = 0;// Output capture will continue to operate in CPU Idle mode
+OC1CON1BITS.OCTSEL = 1; //This selects the peripheral clock as the clock input to the OC1
+      //Select Timer3 as the clock input to the OC1
+         //111 = 系统时钟
+      //110 = 保留
+      //101 = 保留
+      //100 = Timer1
+      //011 = Timer5
+      //010 = Timer4
+      //001 = Timer3
+      //000 = Timer2
+OC1CON1BITS.OCM = 6 ; //110 = PWM模式：OCFA/B 禁用，当OCxTMR = 0 时输出设置为高电平，当OCxTMR = OCxR 时输出设
+      //置为低电平
+
+
+T3CON = 0x00;    //Stops any 16-bit Timer3 operation
+TMR3 = 0x00;    //Clear contents of the timer3 register
+T3CONBITS.TCKPS = 0; //11 = 1:256
+      //10 = 1:64
+      //01 = 1:8
+      //00 = 1:1
+IFS0BITS.T3IF = 0;   //Clear the Timer3 interrupt status flag
+IEC0BITS.T3IE = 1;   //Enable Timer3 interrupts
+IEC0BITS.OC1IE = 0;  //Disable Compare 1 interrupts
+
+PR3 = Period;    //Determine the period
+OC1R = rate;   //Initial Compare Register1 duty cycle
+OC1RS = rate;   //Initial Secondary Compare Register1 duty cycle
+
+T3CONBITS.TON = 1;   //Start Timer3
+}
 
 
 /* PWM example
-  ** Assign OC1 to be output on RF5 //RF13
-  **
+ ** Assign OC1 to be output on RF5-J7(4)
+ **
  *  PWM Period = [(PR2) + 1] * 2 * TOSC * (TMR2 Prescale Value)
-  */
-  #define  PWM_PERIOD 62500
-  void PwmInit(void)
-  {
-      int i;
-      //CLKDIV =  0; /* set for default clock operations Fcyc = 4MHz */
-      //AD1PCFGL = 0xffff;
-      //AD1PCFGH = 0x0003;
+ */
+void PwmInit(void)
+{
+    //int i;
+    POT_Init();
 
-      /* Unmap RP31(RF13) */
-      //RPOR15bits.RP31R = 0;
-      //Unmap RP17(RF5)   
-      RPOR8bits.RP17R = 0;
+    //Make the pin of RP17(RF5) as normal function
+    RPOR8bits.RP17R = 0;
+    // Drive RF5 low and make it an output
+    LATFbits.LATF5 = 0;
+    TRISFbits.TRISF5 = 0;
 
-      /* Drive RF13 low and make it an output */
-      //LATFbits.LATF13 = 0;
-      //TRISFbits.TRISF13 = 0;
-      //Nop();
-     /* Drive RF5 low and make it an output */
-      LATFbits.LATF5 = 0;
-      TRISFbits.TRISF5 = 0;
+    // Reset PWM
+    OC1CON1 = 0x0000;
+    OC1CON2 = 0x0000;
 
-      /* Reset PWM */
-      //OC1CON1 = 0x0000;
-      //OC1CON2 = 0x0000;
-
-         // config timer3
+    // config timer3
     T3CON = 0x00; //Stops the Timer3 and reset control reg.
     TMR3 = 0x00; //Clear contents of the timer register
     PR3 = 0xFFFF; //Load the Period register with the value 0xFFFF
@@ -69,32 +169,32 @@ static BYTE ReadPOT(void);
      *   Fcy=16MHz=0.0625us
      *
      */
+    T3CONbits.TCKPS = 0x03;
+    // configure PWM
+    OC1CON2 = 0x001F;   /* Sync with This OC module                               */
+    OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
+    /* enable the PWM */
+    OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
 
-     T3CONbits.TCKPS = 0x0;
+    // Make the pin of RP17(RF5) as OC1 (PWM output)
+    RPOR8bits.RP17R = 18;
 
-     /* configure PWM */
-     OC1CON2 = 0x001F;   /* Sync with This OC module                               */
-     OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
-
-     /* enable the PWM */
-     OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
-
-     /* Make pin RP31(RF13) OC1 (PWM output) */
-     RPOR8bits.RP17R = 18;
-
-      T3CONbits.TON = 1; //Start Timer3
-      for (;; )
-      {
-          BYTE j;
-          j = ReadPOT();
-          /* set PWM duty cycle to 50% */
-          OC1R    = j;
-          OC1RS   = 1249;  /* set the period */
-          delay_ms(200);
-      }
+    T3CONbits.TON = 1; //Start Timer3
+    // set the PWM period, 125 * 16us = 20ms
+    OC1RS   = 125;
+    for (;; )
+    {
+        BYTE j;
+        j = POT_Read();
+        
+        // set PWM duty cycle
+        OC1R    = j;
+        delay_ms(200);
+    }
       
-      //while(1);
-  }
+    //while(1);
+}
+#endif
 
 #if 0
   int
@@ -195,9 +295,9 @@ OC2RS = (OC2RS>=1)?OC2RS - 1:0;  //decrement
   Remarks:
     None
   ***************************************************************************/
-static BYTE ReadPOT(void)
+unsigned int POT_Read(void)
 {
-    WORD_VAL w;
+    //WORD_VAL w;
     DWORD temp;
 
     AD1CHS = 0x9;           //MUXA uses AN9
@@ -205,10 +305,10 @@ static BYTE ReadPOT(void)
     // Get an ADC sample
     AD1CON1bits.SAMP = 1;           //Start sampling
     //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
-    delay_ms(10);
+    delay_ms(1);
     AD1CON1bits.SAMP = 0;           //Start sampling
     //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
-    delay_ms(10);
+    delay_ms(1);
     while(!AD1CON1bits.DONE);       //Wait for conversion to complete
     temp = (DWORD)ADC1BUF0;
     temp = temp * 100;

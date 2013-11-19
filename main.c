@@ -113,6 +113,7 @@
 #include "cn_intr.h"
 
 #include "moter_l298n.h"
+#include "pwm_func.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -197,8 +198,6 @@ static void vTask_test7 (void *pvParameters );
 
 xQueueHandle xTest_Queue;
 
-int PwmInit(void);
-
 #define vTask_STACK_SIZE    (configMINIMAL_STACK_SIZE * 5)
 /*
  * Create the demo tasks then start the scheduler.
@@ -211,6 +210,8 @@ int main( void )
     CN_Function_Init();
     Lcd_1602_init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
+    PwmInit();
+    
     xTest_Queue = xQueueCreate(20, sizeof(int));
     xLCD_Queue = xQueueCreate(50, sizeof(t_LCD_data));
     xSonar_Queue = xQueueCreate(20, sizeof(t_CN_INT_data));
