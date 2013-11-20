@@ -11,7 +11,11 @@
 #include <GenericTypeDefs.h>
 
 void POT_Init(void);
-unsigned int POT_Read(void);
+BYTE POT_Read(void);
 void PwmInit(void);
+void Servo_SG90_Rotation(int d);
+void Servo_SG90_Move(int sw);
+void Servo_SG90_Init(void);
+
 
 #endif

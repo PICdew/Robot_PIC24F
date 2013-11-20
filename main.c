@@ -190,9 +190,10 @@ static void vTask_test3 (void *pvParameters );
 static void vTask_test4 (void *pvParameters );
 static void vTask_test5 (void *pvParameters );
 static void vTask_test6 (void *pvParameters );
+// Motor wheel test
 static void vTask_test7 (void *pvParameters );
-
-
+// Servo_SG90 test
+static void vTask_test8 (void *pvParameters );
 
 /****************************************************************************/
 
@@ -210,8 +211,6 @@ int main( void )
     CN_Function_Init();
     Lcd_1602_init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
-    PwmInit();
-    
     xTest_Queue = xQueueCreate(20, sizeof(int));
     xLCD_Queue = xQueueCreate(50, sizeof(t_LCD_data));
     xSonar_Queue = xQueueCreate(20, sizeof(t_CN_INT_data));
@@ -223,7 +222,8 @@ int main( void )
     //xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
     //xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test7, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_test7, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
     xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
@@ -239,6 +239,41 @@ int main( void )
     return 0;
 }
 
+static void vTask_test8(void *pvParameters)
+{
+    int i,j;
+    portTickType xLastWakeTime;
+    (void)pvParameters;
+
+    Servo_SG90_Init();
+    i = 0;
+    j = 10; // 10degree per step
+    xLastWakeTime = xTaskGetTickCount();
+    for (;;)
+    {
+
+        vTaskDelayUntil(&xLastWakeTime, 200);
+
+        LCD_Show_Value(2, 0, i, 10, 4);
+        Servo_SG90_Rotation(i);
+        Servo_SG90_Move(1);
+        vTaskDelay(40);
+        Servo_SG90_Move(0);
+
+        i = i + j;
+        if (i > 180)
+        {
+            j = -10;
+            i = 170;
+        }
+        if (i < 0)
+        {
+            j = 10;
+            i = 10;
+        }
+    }
+
+}
 static void vTask_test6(void *pvParameters)
 {
 	unsigned char a;

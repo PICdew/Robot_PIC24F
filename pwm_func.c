@@ -38,102 +38,49 @@ void POT_Init(void)
     AD1CON1bits.ADON = 1;
 }
 
-/* PWM example
- ** Assign OC1 to be output on RF5-J7(4)
- **
- *  PWM Period = [(PR2) + 1] * 2 * TOSC * (TMR2 Prescale Value)
- */
-void PwmInit(void)
+/****************************************************************************
+  Function:
+    BYTE ReadPOT(void)
+
+  Summary:
+    Reads the pot value and returns the percentage of full scale (0-100)
+
+  Description:
+    Reads the pot value and returns the percentage of full scale (0-100)
+
+  Precondition:
+    A/D is initialized properly
+
+  Parameters:
+    None
+
+  Return Values:
+    None
+
+  Remarks:
+    None
+  ***************************************************************************/
+BYTE POT_Read(void)
 {
-    //int i;
-    POT_Init();
+    //WORD_VAL w;
+    DWORD temp;
 
-    //Make the pin of RP17(RF5) as normal function
-    RPOR8bits.RP17R = 0;
-    // Drive RF5 low and make it an output
-    LATFbits.LATF5 = 0;
-    TRISFbits.TRISF5 = 0;
+    AD1CHS = 0x9;           //MUXA uses AN9
 
-    // Reset PWM
-    OC1CON1 = 0x0000;
-    OC1CON2 = 0x0000;
+    // Get an ADC sample
+    AD1CON1bits.SAMP = 1;           //Start sampling
+    //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
+    delay_ms(1);
+    AD1CON1bits.SAMP = 0;           //Start sampling
+    //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
+    delay_ms(1);
+    while(!AD1CON1bits.DONE);       //Wait for conversion to complete
+    temp = (DWORD)ADC1BUF0;
+    temp = temp * 100;
+    temp = temp/1023;
 
-    // configure PWM
-    OC1CON2 = 0x001F;   /* Sync with This OC module                               */
-    OC1CON1 = 0x1C08;   /* Clock sourc Fcyc(32Mhz, 0.0625us), trigger mode 1, Mode 0 (disable OC1) */
-    /* enable the PWM */
-    OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
-
-    // Make the pin of RP17(RF5) as OC1 (PWM output)
-    RPOR8bits.RP17R = 18;
-
-    // set the PWM period, 20ms = 320000 * 0.0625us = 20ms
-    OC1RS   = 0xFFFF;
-    for (;; )
-    {
-        unsigned int j;
-        j = POT_Read();
-        if (j>0)
-            j = 0xFFFF / j;
-        // set PWM duty cycle
-        OC1R = j;
-        delay_ms(200);
-    }
-
-    //while(1);
-}
-
-#if 0
-/*
-Find the Period register value for a desired PWM frequency of 2 kHz,
- where Fosc = 32 MHz  (32 MHz device clock rate) and
- a Timer3 prescaler setting of 1:1.
- Tcy = 2/Fosc = 62.5 ns
- PWM Period   =  1/PWM Frequency = 1/2 kHz = 500 μs
- PWM Period   = (PR2 + 1) * Tcy * (Timer 3 Prescale Value)  *PWM周期计算公式
- 500 μs = (PR2 + 1) * 62.5 ns * 1
- PR2 = 800-1
-*/
-
-void BZOUT(int Period,int rate)
-{
-OC1CON1 = 0;//It is a good practice to clear off the control bits initially
-OC1CON2 = 0;
-
-OC1CON2.SYNCSEL = 13;
-OC1CON2.OCTRIG = 1;
-OC1CON1BITS.OCSIDL = 0;// Output capture will continue to operate in CPU Idle mode
-OC1CON1BITS.OCTSEL = 1; //This selects the peripheral clock as the clock input to the OC1
-      //Select Timer3 as the clock input to the OC1
-         //111 = 系统时钟
-      //110 = 保留
-      //101 = 保留
-      //100 = Timer1
-      //011 = Timer5
-      //010 = Timer4
-      //001 = Timer3
-      //000 = Timer2
-OC1CON1BITS.OCM = 6 ; //110 = PWM模式：OCFA/B 禁用，当OCxTMR = 0 时输出设置为高电平，当OCxTMR = OCxR 时输出设
-      //置为低电平
-
-
-T3CON = 0x00;    //Stops any 16-bit Timer3 operation
-TMR3 = 0x00;    //Clear contents of the timer3 register
-T3CONBITS.TCKPS = 0; //11 = 1:256
-      //10 = 1:64
-      //01 = 1:8
-      //00 = 1:1
-IFS0BITS.T3IF = 0;   //Clear the Timer3 interrupt status flag
-IEC0BITS.T3IE = 1;   //Enable Timer3 interrupts
-IEC0BITS.OC1IE = 0;  //Disable Compare 1 interrupts
-
-PR3 = Period;    //Determine the period
-OC1R = rate;   //Initial Compare Register1 duty cycle
-OC1RS = rate;   //Initial Secondary Compare Register1 duty cycle
-
-T3CONBITS.TON = 1;   //Start Timer3
-}
-
+    return (BYTE)temp;
+}//end ReadPOT
 
 /* PWM example
  ** Assign OC1 to be output on RF5-J7(4)
@@ -169,10 +116,11 @@ void PwmInit(void)
      *   Fcy=16MHz=0.0625us
      *
      */
-    T3CONbits.TCKPS = 0x03;
+    T3CONbits.TCKPS = 0x03; //1:256, 16us
     // configure PWM
     OC1CON2 = 0x001F;   /* Sync with This OC module                               */
-    OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
+    //OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
+    OC1CON1 = 0x0408;   /* Clock sourc timer3, trigger mode 1, Mode 0 (disable OC1) */
     /* enable the PWM */
     OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
 
@@ -180,11 +128,12 @@ void PwmInit(void)
     RPOR8bits.RP17R = 18;
 
     T3CONbits.TON = 1; //Start Timer3
-    // set the PWM period, 125 * 16us = 20ms
-    OC1RS   = 125;
+    // set the PWM period, 1250 * 16us = 20ms
+    OC1RS   = 1250;
     for (;; )
     {
         BYTE j;
+        // 0~100, 100*16us = 1.6ms
         j = POT_Read();
         
         // set PWM duty cycle
@@ -194,7 +143,75 @@ void PwmInit(void)
       
     //while(1);
 }
-#endif
+/*
+ * Servo SG90 spec:
+ * 20ms as base clock, duty cycle as below
+ * 0.5ms:0 degree； 1.0ms:45；1.5ms:90；
+ * 2.0ms:135；2.5ms:180；
+
+ */
+void Servo_SG90_Init(void)
+{
+    // Drive RF5 low and make it an output
+    LATFbits.LATF5 = 0;
+    TRISFbits.TRISF5 = 0;
+    // Make the pin of RP17(RF5) as OC1 (PWM output)
+    RPOR8bits.RP17R = 18;
+
+    // configure PWM
+    OC1CON2 = 0x001F;   /* Sync with This OC module                               */
+    //OC1CON1 = 0x1C08;   /* Clock sourc Fcyc, trigger mode 1, Mode 0 (disable OC1) */
+    OC1CON1 = 0x0408;   /* Clock sourc timer3, trigger mode 1, Mode 0 (disable OC1) */
+    // enable the PWM
+    OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
+    // set the PWM period, 1250 * 16us = 20ms
+    OC1RS = 1250;
+    OC1R = 0;
+
+
+    // config timer3
+    T3CON = 0x00; //Stops the Timer3 and reset control reg.
+    TMR3 = 0x00; //Clear contents of the timer register
+    PR3 = 0xFFFF; //Load the Period register with the value 0xFFFF
+
+    /*
+     *  bit 5-4 TCKPS<1:0>: Timerx Input Clock Prescale Select bits
+     *  11 = 1:256 prescale value, 16us
+     *  10 = 1:64 prescale value, 4us
+     *  01 = 1:8 prescale value, 0.5us
+     *  00 = 1:1 prescale value, 0.0625us,
+     *   Fcy=16MHz=0.0625us
+     *
+     */
+    T3CONbits.TCKPS = 0x03; //1:256, 16us
+    //T3CONbits.TON = 1; //Start Timer3
+}
+
+/*
+ *  d as the degree of SG90 rotate 
+ *  0.5ms:0 degree； 1.0ms:45；1.5ms:90；
+ *  2.0ms:135；2.5ms:180；
+ */
+void Servo_SG90_Rotation(int d)
+{
+    int i,j;
+    if (d < 0 || d > 180)
+        i = 90;
+    else
+        i = d;
+    // 1 degree = 11.1us, timer3 scale is 16us, so, i * 11.1/16us = i*0.7, 500us/16 = 31
+    j = i * 0.7 + 31;
+    // set PWM duty cycle
+    OC1R = j;
+
+}
+
+void Servo_SG90_Move(int sw)
+{
+    //  Start/Stop Timer3
+    T3CONbits.TON = sw;
+}
+
 
 #if 0
   int
@@ -273,46 +290,102 @@ OC2RS = (OC2RS<(0x63F -2))?OC2RS + 1: 0x63F + 1; //Increment
 OC2RS = (OC2RS>=1)?OC2RS - 1:0;  //decrement
 #endif
 
-/****************************************************************************
-  Function:
-    BYTE ReadPOT(void)
-
-  Summary:
-    Reads the pot value and returns the percentage of full scale (0-100)
-
-  Description:
-    Reads the pot value and returns the percentage of full scale (0-100)
-
-  Precondition:
-    A/D is initialized properly
-
-  Parameters:
-    None
-
-  Return Values:
-    None
-
-  Remarks:
-    None
-  ***************************************************************************/
-unsigned int POT_Read(void)
+#if 0
+/* PWM example
+ ** Assign OC1 to be output on RF5-J7(4)
+ **
+ *  PWM Period = [(PR2) + 1] * 2 * TOSC * (TMR2 Prescale Value)
+ */
+void PwmInit(void)
 {
-    //WORD_VAL w;
-    DWORD temp;
+    //int i;
+    POT_Init();
 
-    AD1CHS = 0x9;           //MUXA uses AN9
+    //Make the pin of RP17(RF5) as normal function
+    RPOR8bits.RP17R = 0;
+    // Drive RF5 low and make it an output
+    LATFbits.LATF5 = 0;
+    TRISFbits.TRISF5 = 0;
 
-    // Get an ADC sample
-    AD1CON1bits.SAMP = 1;           //Start sampling
-    //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
-    delay_ms(1);
-    AD1CON1bits.SAMP = 0;           //Start sampling
-    //for(w.Val=0;w.Val<1000;w.Val++){Nop();} //Sample delay, conversion start automatically
-    delay_ms(1);
-    while(!AD1CON1bits.DONE);       //Wait for conversion to complete
-    temp = (DWORD)ADC1BUF0;
-    temp = temp * 100;
-    temp = temp/1023;
+    // Reset PWM
+    OC1CON1 = 0x0000;
+    OC1CON2 = 0x0000;
 
-    return (BYTE)temp;
-}//end ReadPOT
+    // configure PWM
+    OC1CON2 = 0x001F;   /* Sync with This OC module                               */
+    OC1CON1 = 0x1C08;   /* Clock sourc Fcyc(32Mhz, 0.0625us), trigger mode 1, Mode 0 (disable OC1) */
+    /* enable the PWM */
+    OC1CON1 = OC1CON1 | 0x0006;   /* Mode 6, Edge-aligned PWM Mode */
+
+    // Make the pin of RP17(RF5) as OC1 (PWM output)
+    RPOR8bits.RP17R = 18;
+
+    // set the PWM period, 20ms = 320000 * 0.0625us = 20ms
+    OC1RS   = 0xFFFF;
+    for (;; )
+    {
+        unsigned int j;
+        j = POT_Read();
+        if (j>0)
+            j = 0xFFFF / j;
+        // set PWM duty cycle
+        OC1R = j;
+        delay_ms(200);
+    }
+
+    //while(1);
+}
+#endif
+
+#if 0
+/*
+Find the Period register value for a desired PWM frequency of 2 kHz,
+ where Fosc = 32 MHz  (32 MHz device clock rate) and
+ a Timer3 prescaler setting of 1:1.
+ Tcy = 2/Fosc = 62.5 ns
+ PWM Period   =  1/PWM Frequency = 1/2 kHz = 500 μs
+ PWM Period   = (PR2 + 1) * Tcy * (Timer 3 Prescale Value)  *PWM周期计算公式
+ 500 μs = (PR2 + 1) * 62.5 ns * 1
+ PR2 = 800-1
+*/
+
+void BZOUT(int Period,int rate)
+{
+OC1CON1 = 0;//It is a good practice to clear off the control bits initially
+OC1CON2 = 0;
+
+OC1CON2.SYNCSEL = 13;
+OC1CON2.OCTRIG = 1;
+OC1CON1BITS.OCSIDL = 0;// Output capture will continue to operate in CPU Idle mode
+OC1CON1BITS.OCTSEL = 1; //This selects the peripheral clock as the clock input to the OC1
+      //Select Timer3 as the clock input to the OC1
+         //111 = 系统时钟
+      //110 = 保留
+      //101 = 保留
+      //100 = Timer1
+      //011 = Timer5
+      //010 = Timer4
+      //001 = Timer3
+      //000 = Timer2
+OC1CON1BITS.OCM = 6 ; //110 = PWM模式：OCFA/B 禁用，当OCxTMR = 0 时输出设置为高电平，当OCxTMR = OCxR 时输出设
+      //置为低电平
+
+
+T3CON = 0x00;    //Stops any 16-bit Timer3 operation
+TMR3 = 0x00;    //Clear contents of the timer3 register
+T3CONBITS.TCKPS = 0; //11 = 1:256
+      //10 = 1:64
+      //01 = 1:8
+      //00 = 1:1
+IFS0BITS.T3IF = 0;   //Clear the Timer3 interrupt status flag
+IEC0BITS.T3IE = 1;   //Enable Timer3 interrupts
+IEC0BITS.OC1IE = 0;  //Disable Compare 1 interrupts
+
+PR3 = Period;    //Determine the period
+OC1R = rate;   //Initial Compare Register1 duty cycle
+OC1RS = rate;   //Initial Secondary Compare Register1 duty cycle
+
+T3CONBITS.TON = 1;   //Start Timer3
+}
+
+#endif
