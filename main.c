@@ -177,6 +177,24 @@
  */
 static void prvSetupHardware( void );
 
+ /** Button **/
+void BTN_Init()
+{
+    // pin38, TCK/CN34/RA1
+    TRISAbits.TRISA1 = 1;
+    // pin35, AN11/PMA12/CN29/RB11
+    TRISBbits.TRISB11 = 1;
+    
+    TRISFbits.TRISF12 = 1;
+    TRISFbits.TRISF13 = 1;
+    AD1PCFGLbits.PCFG11 = 1;
+}
+#define BTN5_Pressed()    ((PORTFbits.RF13  == 0)? TRUE : FALSE)
+#define BTN4_Pressed()    ((PORTFbits.RF12  == 0)? TRUE : FALSE)
+#define BTN3_Pressed()    ((PORTBbits.RB11  == 0)? TRUE : FALSE)
+#define BTN2_Pressed()    ((PORTAbits.RA1 == 0)? TRUE : FALSE)
+
+
 /*-----------------------------------------------------------*/
 
 /* The queue used to send messages to the LCD task. */
@@ -205,7 +223,19 @@ xQueueHandle xTest_Queue;
  */
 int main( void )
 {
+    BYTE a;
     InitAllLEDs();
+    // check the start button, BTN2-RA1
+    BTN_Init();
+    a = 0;
+    
+    while (!BTN2_Pressed())
+    {
+        LED_On(a);
+        delay_ms(500);
+        a = 1 - a;
+    }
+
     InitI2C();
     // config CN interrupt and reset the register.
     CN_Function_Init();
@@ -223,7 +253,7 @@ int main( void )
     //xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test7, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
     xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );

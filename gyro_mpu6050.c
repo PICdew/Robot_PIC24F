@@ -187,7 +187,7 @@ void vTask_Gyro_MPU6050(void *pvParameters )
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil(&xLastWakeTime, 500);
+        vTaskDelayUntil(&xLastWakeTime, 50);
 #if 0
         temp ++;
         if (temp > 100)
@@ -196,7 +196,7 @@ void vTask_Gyro_MPU6050(void *pvParameters )
             temp = 0;
         }
 #endif
-#if 0
+#if 1
         x = 1;
         LCD_Show_String(0, 0, "G", 1);
         gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H) + cal_gyro_x;

@@ -32,7 +32,8 @@
     #define LED5_Off()        mLED_8  = 0;
     #define LED6_Off()        mLED_9  = 0;
     #define LED7_Off()        mLED_10 = 0;
-
+    
+    #define LED_On(n) {LATE = n;}
 
 // for debug , Regis 2013/11/12
 #define LED_ERR(n) {LATE = n; while(1);}
