@@ -114,6 +114,7 @@
 
 #include "moter_l298n.h"
 #include "pwm_func.h"
+#include "kalman.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -255,7 +256,8 @@ int main( void )
     //xTaskCreate( vTask_test7, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
-    xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
+    xTaskCreate( vTask_Gyro_MPU6050_Kalman, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
 
     /* Start the high frequency interrupt test. */

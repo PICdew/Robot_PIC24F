@@ -20,6 +20,8 @@
 #include "i2c_func.h"
 #include "lcd_i2c_1602.h"
 #include "gyro_mpu6050.h"
+#include "kalman.h"
+#include "math.h"
 
 /*
  *
@@ -70,8 +72,8 @@ void Gyro_i2c_write(UINT8 ControlByte, UINT8 LowAdd, UINT8 data)
 	StopI2C();				//Initiate Stop Condition
 }
 
-static int cal_gyro_x, cal_gyro_y, cal_gyro_z;
-static int cal_acc_x, cal_acc_y, cal_acc_z;
+static int base_gyro_x, base_gyro_y, base_gyro_z;
+static int base_acc_x, base_acc_y, base_acc_z;
 
 //**************************************
 //初始化MPU6050
@@ -94,8 +96,8 @@ UINT8 Gyro_MPU6050_Init(void)
 {
     UINT8 id;
 
-    cal_gyro_x = cal_gyro_y = cal_gyro_z = 0;
-    cal_acc_x = cal_acc_y = cal_acc_z = 0;
+    base_gyro_x = base_gyro_y = base_gyro_z = 0;
+    base_acc_x = base_acc_y = base_acc_z = 0;
 
     // reset
     Gyro_i2c_write(Gyro_MPU6050_Address, PWR_MGMT_1, 0x80);
@@ -111,10 +113,12 @@ UINT8 Gyro_MPU6050_Init(void)
         // where Gyroscope Output Rate = 8kHz when the DLPF is disabled (DLPF_CFG = 0 or 7),
         // and 1kHz when the DLPF is enabled
         Gyro_i2c_write(Gyro_MPU6050_Address, SMPLRT_DIV, 15); // (15): 60Hz //(255):4 Hz
-        // GYRO_CONFIG, (0x18)set Full Scale Range as mode 3, ± 2000°/s
-        Gyro_i2c_write(Gyro_MPU6050_Address, GYRO_CONFIG, 0x10);
-        // ACCEL_CONFIG, (0x18)set Digital High Pass Filter (DHPF) as mode 3, ± 16g
-        Gyro_i2c_write(Gyro_MPU6050_Address, ACCEL_CONFIG, 0x10);
+        // GYRO_CONFIG, FS_SEL, Full Scale Range,
+        // 0x18:± 2000°/s, 0x10: 1000°/s, 0x08: ± 500 °/s, 0x00:± 250 °/s
+        Gyro_i2c_write(Gyro_MPU6050_Address, GYRO_CONFIG, 0x00);
+        // ACCEL_CONFIG, AFS_SEL, Digital High Pass Filter (DHPF),
+        // 0x18: ± 16g,0x10: ± 8g,0x08: ± 4g,0x00: ± 2g,
+        Gyro_i2c_write(Gyro_MPU6050_Address, ACCEL_CONFIG, 0x00);
         
     }
     else
@@ -134,39 +138,174 @@ int Gyro_MPU6050_GetData(UINT8 REG_Addr)
 
         data_h = Gyro_i2c_read(Gyro_MPU6050_Address, REG_Addr);
         data_l = Gyro_i2c_read(Gyro_MPU6050_Address, REG_Addr + 1);
-#if 0
-        id = Gyro_i2c_read(Gyro_MPU6050_Address, WHO_AM_I);
-   if (id == Gyro_MPU6050_ID) {
-       data_h = data_l = aaa++;
-   }
-#endif
         //合成數據
         data = (UINT16)data_h;
         data = data << 8;
         data = data + (UINT16)data_l;
 
  	return (int)data;
-
 }
 
 
 /*
 
- caliabrate the Gyro value
+ calibrate the Gyro value
 
  */
-int Gyro_MPU6050_Offset(void)
+#define CAL_TIMES  10
+void Gyro_MPU6050_Calibration(int x)
 {
+    int i;
+    double cal_gyro_x, cal_gyro_y, cal_gyro_z;
+    double cal_acc_x, cal_acc_y, cal_acc_z;
 
-    //delay_ms(2000);
-    cal_gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H) * (-1);
-    cal_gyro_y = Gyro_MPU6050_GetData(GYRO_YOUT_H) * (-1);
-    cal_gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H) * (-1);
-    cal_acc_x = Gyro_MPU6050_GetData(ACCEL_XOUT_H) * (-1);
-    cal_acc_y = Gyro_MPU6050_GetData(ACCEL_YOUT_H) * (-1);
-    cal_acc_z = Gyro_MPU6050_GetData(ACCEL_ZOUT_H) * (-1);
+    for (i=0; i < x; i++)
+    {
+        cal_gyro_x += Gyro_MPU6050_GetData(GYRO_XOUT_H);
+        cal_gyro_y += Gyro_MPU6050_GetData(GYRO_YOUT_H);
+        cal_gyro_z += Gyro_MPU6050_GetData(GYRO_ZOUT_H);
+        cal_acc_x += Gyro_MPU6050_GetData(ACCEL_XOUT_H);
+        cal_acc_y += Gyro_MPU6050_GetData(ACCEL_YOUT_H);
+        cal_acc_z += Gyro_MPU6050_GetData(ACCEL_ZOUT_H);
+        delay_ms(100);
+    }
+    
+    cal_gyro_x /= x;
+    cal_gyro_y /= x;
+    cal_gyro_z /= x;
+    cal_acc_x /= x;
+    cal_acc_y /= x;
+    cal_acc_z /= x;
 
+    // Store the raw calibration values globally
+    base_gyro_x = cal_gyro_x;
+    base_gyro_y = cal_gyro_y;
+    base_gyro_z = cal_gyro_z;
+    base_acc_x = cal_acc_x;
+    base_acc_y = cal_acc_y;
+    base_acc_z = cal_acc_z;
 }
+
+/*
+ Task entry point of Kalman test
+ */
+#define KALMAN_AXIS_X   0
+#define KALMAN_AXIS_Y   1
+
+// Apply the complementary filter to figure out the change in angle - choice of alpha is
+// estimated now.  Alpha depends on the sampling rate...
+#define COMP_ALFA       0.93
+
+void vTask_Gyro_MPU6050_Kalman(void *pvParameters )
+{
+    int accX, accY, accZ;
+    int gyroX, gyroY, gyroZ;
+
+    double accXangle, accYangle, accZangle; // Angle calculate using the accelerometer
+    double temp; // Temperature
+    double gyroXangle, gyroYangle, gyroZangle, gyroZangle_temp; // Angle calculate using the gyro
+    double compAngleX, compAngleY, compAngleZ; // Calculate the angle using a complementary filter
+    double kalAngleX, kalAngleY, kalAngleZ; // Calculate the angle using a Kalman filter
+    double gyroXrate, gyroYrate, gyroZrate;
+
+    int x, i;
+    portTickType xLastWakeTime, timer;
+    //t_LCD_data lcd_data;
+    //portBASE_TYPE xStatus;
+
+    x = i = 0;
+    Gyro_MPU6050_Init();
+    Gyro_MPU6050_Calibration(10);
+
+    xLastWakeTime = xTaskGetTickCount();
+    for( ;; )
+    {
+        vTaskDelayUntil(&xLastWakeTime, 100);
+        gyroX = Gyro_MPU6050_GetData(GYRO_XOUT_H) - base_gyro_x;
+        gyroY = Gyro_MPU6050_GetData(GYRO_YOUT_H) - base_gyro_y;
+        gyroZ = Gyro_MPU6050_GetData(GYRO_ZOUT_H) - base_gyro_z;
+        accX = Gyro_MPU6050_GetData(ACCEL_XOUT_H);
+        accY = Gyro_MPU6050_GetData(ACCEL_YOUT_H);
+        accZ = Gyro_MPU6050_GetData(ACCEL_ZOUT_H);
+
+        // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
+        // We then convert it to 0 to 2π and then from radians to degrees
+        accYangle = (atan2(accX,accZ)+PI)*RAD_TO_DEG;
+        accXangle = (atan2(accY,accZ)+PI)*RAD_TO_DEG;
+        accZangle = 0;
+        //Q: can we get it (for example) from the accelerometer output only as accZangle = (atan2(accX,accY)+PI)*RAD_TO_DEG?
+        //A: No it is not possible to estimate yaw using an accelerometer. Remember that each axis all measure the gravitational
+        //   force in their respective axis -- see them as vectors. When you rotate the IMU along the z-axis none of the axis
+        //   will change, as the gravitational force doesn’t change in any of the axis.
+        //   You will need a gyro and a magnetometer to estimate yaw.
+
+        if (i == 0)
+        {
+            //Gyro_MPU6050_Calibration(5);
+            
+            Kalman_Init(KALMAN_AXIS_X);
+            Kalman_Init(KALMAN_AXIS_Y);
+
+            Kalman_setAngle(KALMAN_AXIS_X, accXangle); // Set starting angle
+            Kalman_setAngle(KALMAN_AXIS_Y, accYangle); // Set starting angle
+
+            //kalmanY_setAngle(accYangle);
+            gyroXangle = accXangle;
+            gyroYangle = accYangle;
+            gyroZangle = accZangle;
+
+            compAngleX = accXangle;
+            compAngleY = accYangle;
+            compAngleZ = accZangle;
+
+            kalAngleX = kalAngleY = kalAngleY = 0;
+            i = 1;
+        }
+        else
+        {
+            // Convert gyro values to degrees/sec
+            gyroXrate = (double)gyroX/131.0;
+            gyroYrate = -((double)gyroY/131.0);
+            gyroZrate = ((double)gyroZ/131.0);
+  
+            gyroXangle += gyroXrate*((double)(xTaskGetTickCount()-timer)/1000.0); // Calculate gyro angle without any filter
+            gyroYangle += gyroYrate*((double)(xTaskGetTickCount()-timer)/1000.0);
+            gyroZangle_temp = gyroZrate*((double)(xTaskGetTickCount()-timer)/1000.0);
+            gyroZangle += gyroZangle_temp;
+
+            ////gyroXangle += kalmanX.getRate()*((double)(micros()-timer)/1000000); // Calculate gyro angle using the unbiased rate
+            ////gyroYangle += kalmanY.getRate()*((double)(micros()-timer)/1000000);
+
+            // Apply the complementary filter to figure out the change in angle - choice of alpha is
+            // estimated now.  Alpha depends on the sampling rate...
+            // Regis, set the Alpha as 0.93
+            compAngleX = (COMP_ALFA * (compAngleX+(gyroXrate*(double)(xTaskGetTickCount()-timer)/1000.0)))+((1-COMP_ALFA)*accXangle); // Calculate the angle using a Complimentary filter
+            compAngleY = (COMP_ALFA * (compAngleY+(gyroYrate*(double)(xTaskGetTickCount()-timer)/1000.0)))+((1-COMP_ALFA)*accYangle);
+            compAngleZ = gyroZangle; //Accelerometer doesn't give z-angle
+
+            i = i + 1;
+
+            kalAngleX = Kalman_getAngle(KALMAN_AXIS_X, accXangle, gyroXrate, (double)(xTaskGetTickCount()-timer)/1000.0); // Calculate the angle using a Kalman filter
+            kalAngleY = Kalman_getAngle(KALMAN_AXIS_Y, accYangle, gyroYrate, (double)(xTaskGetTickCount()-timer)/1000.0); // Calculate the angle using a Kalman filter
+            kalAngleZ = gyroZangle; //Accelerometer doesn't give z-angle
+        }
+
+        timer = xTaskGetTickCount();
+        //temp = ((double)tempRaw + 12412.0) / 340.0;
+        
+        x = 0;
+        LCD_Show_Value(x, 0, compAngleX, 10, 4);
+        LCD_Show_Value(x, 1, kalAngleX, 10, 4);
+        x += 5;
+        LCD_Show_Value(x, 0, compAngleY, 10, 4);
+        LCD_Show_Value(x, 1, kalAngleY, 10, 4);
+        x += 5;
+        LCD_Show_Value(x, 0, compAngleZ, 10, 4);
+        LCD_Show_Value(x, 1, kalAngleZ, 10, 4);
+
+    }
+}
+
 
 
 /*
@@ -199,32 +338,34 @@ void vTask_Gyro_MPU6050(void *pvParameters )
 #if 1
         x = 1;
         LCD_Show_String(0, 0, "G", 1);
-        gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H) + cal_gyro_x;
+        gyro_x = Gyro_MPU6050_GetData(GYRO_XOUT_H);
         LCD_Show_Value(x, 0, gyro_x, 10, 5);
 
         x += 5;
-        gyro_y = Gyro_MPU6050_GetData(GYRO_YOUT_H) + cal_gyro_y;
+        gyro_y = Gyro_MPU6050_GetData(GYRO_YOUT_H);
         LCD_Show_Value(x, 0, gyro_y, 10, 5);
 
         x += 5;
-        gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H) + cal_gyro_z;
+        gyro_z = Gyro_MPU6050_GetData(GYRO_ZOUT_H);
         LCD_Show_Value(x, 0, gyro_z, 10, 5);
 #endif
 
         x = 1;
         LCD_Show_String(0, 1, "A", 1);
-        acc_x = Gyro_MPU6050_GetData(ACCEL_XOUT_H) + cal_acc_x;
+        acc_x = Gyro_MPU6050_GetData(ACCEL_XOUT_H);
         LCD_Show_Value(x, 1, acc_x, 10, 5);
 
         x += 5;
-        acc_y = Gyro_MPU6050_GetData(ACCEL_YOUT_H) + cal_acc_y;
+        acc_y = Gyro_MPU6050_GetData(ACCEL_YOUT_H);
         LCD_Show_Value(x, 1, acc_y, 10, 5);
 
         x += 5;
-        acc_z = Gyro_MPU6050_GetData(ACCEL_ZOUT_H) + cal_acc_z;
+        acc_z = Gyro_MPU6050_GetData(ACCEL_ZOUT_H);
         LCD_Show_Value(x, 1, acc_z, 10, 5);
     }
 }
+
+
 
 #if 0
 //////////////////////////////////////////////////////////////////////////
