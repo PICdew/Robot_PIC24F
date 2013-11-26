@@ -1,98 +1,8 @@
 /*
-    FreeRTOS V7.5.3 - Copyright (C) 2013 Real Time Engineers Ltd. 
-    All rights reserved
-
-    VISIT http://www.FreeRTOS.org TO ENSURE YOU ARE USING THE LATEST VERSION.
-
-    ***************************************************************************
-     *                                                                       *
-     *    FreeRTOS provides completely free yet professionally developed,    *
-     *    robust, strictly quality controlled, supported, and cross          *
-     *    platform software that has become a de facto standard.             *
-     *                                                                       *
-     *    Help yourself get started quickly and support the FreeRTOS         *
-     *    project by purchasing a FreeRTOS tutorial book, reference          *
-     *    manual, or both from: http://www.FreeRTOS.org/Documentation        *
-     *                                                                       *
-     *    Thank you!                                                         *
-     *                                                                       *
-    ***************************************************************************
-
-    This file is part of the FreeRTOS distribution.
-
-    FreeRTOS is free software; you can redistribute it and/or modify it under
-    the terms of the GNU General Public License (version 2) as published by the
-    Free Software Foundation >>!AND MODIFIED BY!<< the FreeRTOS exception.
-
-    >>! NOTE: The modification to the GPL is included to allow you to distribute
-    >>! a combined work that includes FreeRTOS without being obliged to provide
-    >>! the source code for proprietary components outside of the FreeRTOS
-    >>! kernel.
-
-    FreeRTOS is distributed in the hope that it will be useful, but WITHOUT ANY
-    WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-    FOR A PARTICULAR PURPOSE.  Full license text is available from the following
-    link: http://www.freertos.org/a00114.html
-
-    1 tab == 4 spaces!
-
-    ***************************************************************************
-     *                                                                       *
-     *    Having a problem?  Start by reading the FAQ "My application does   *
-     *    not run, what could be wrong?"                                     *
-     *                                                                       *
-     *    http://www.FreeRTOS.org/FAQHelp.html                               *
-     *                                                                       *
-    ***************************************************************************
-
-    http://www.FreeRTOS.org - Documentation, books, training, latest versions,
-    license and Real Time Engineers Ltd. contact details.
-
-    http://www.FreeRTOS.org/plus - A selection of FreeRTOS ecosystem products,
-    including FreeRTOS+Trace - an indispensable productivity tool, a DOS
-    compatible FAT file system, and our tiny thread aware UDP/IP stack.
-
-    http://www.OpenRTOS.com - Real Time Engineers ltd license FreeRTOS to High
-    Integrity Systems to sell under the OpenRTOS brand.  Low cost OpenRTOS
-    licenses offer ticketed support, indemnification and middleware.
-
-    http://www.SafeRTOS.com - High Integrity Systems also provide a safety
-    engineered and independently SIL3 certified version for use in safety and
-    mission critical applications that require provable dependability.
-
-    1 tab == 4 spaces!
-*/
-
-/*
- * Creates all the demo application tasks, then starts the scheduler.  The WEB
- * documentation provides more details of the standard demo application tasks.
- * In addition to the standard demo tasks, the following tasks and tests are
- * defined and/or created within this file:
+ *  Main.c
+ *  Regis Hsu
+ *  2013/06/10
  *
- * "Fast Interrupt Test" - A high frequency periodic interrupt is generated
- * using a free running timer to demonstrate the use of the 
- * configKERNEL_INTERRUPT_PRIORITY configuration constant.  The interrupt 
- * service routine measures the number of processor clocks that occur between
- * each interrupt - and in so doing measures the jitter in the interrupt 
- * timing.  The maximum measured jitter time is latched in the usMaxJitter 
- * variable, and displayed on the LCD by the 'Check' as described below.  
- * The fast interrupt is configured and handled in the timer_test.c source 
- * file.
- *
- * "LCD" task - the LCD task is a 'gatekeeper' task.  It is the only task that
- * is permitted to access the LCD directly.  Other tasks wishing to write a
- * message to the LCD send the message on a queue to the LCD task instead of 
- * accessing the LCD themselves.  The LCD task just blocks on the queue waiting 
- * for messages - waking and displaying the messages as they arrive.  The LCD
- * task is defined in lcd.c.  
- * 
- * "Check" task -  This only executes every three seconds but has the highest 
- * priority so is guaranteed to get processor time.  Its main function is to 
- * check that all the standard demo tasks are still operational.  Should any
- * unexpected behaviour within a demo task be discovered the 'check' task will
- * write "FAIL #n" to the LCD (via the LCD task).  If all the demo tasks are 
- * executing with their expected behaviour then the check task writes the max
- * jitter time to the LCD (again via the LCD task), as described above.
  */
 
 /* Standard includes. */
@@ -115,6 +25,7 @@
 #include "moter_l298n.h"
 #include "pwm_func.h"
 #include "kalman.h"
+#include "gyro_car.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -257,9 +168,9 @@ int main( void )
     //xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_Gyro_MPU6050_Kalman, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_Gyro_MPU6050_Kalman, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
-
+    xTaskCreate( vTask_Gyro_Car, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
 

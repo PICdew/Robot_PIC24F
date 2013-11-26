@@ -41,5 +41,10 @@ void Gyro_MPU6050_Calibration(int x);
 void vTask_Gyro_MPU6050(void *pvParameters );
 void vTask_Gyro_MPU6050_Kalman(void *pvParameters );
 
+void Gyro_MPU6050_Kalman_Angle_Start(void);
+void Gyro_MPU6050_Kalman_Angle_Get(int *angleX, int *angleY, int *angleZ);
+
+
+
 #endif
 

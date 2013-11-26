@@ -108,11 +108,13 @@ UINT8 Gyro_MPU6050_Init(void)
 
         Gyro_i2c_write(Gyro_MPU6050_Address, PWR_MGMT_1, 0x00);
         // set the Digital Low Pass Filter (DLPF) as mode 6
-        Gyro_i2c_write(Gyro_MPU6050_Address, CONFIG, 0x06);
+        Gyro_i2c_write(Gyro_MPU6050_Address, CONFIG, 0x00);
+        //Gyro_i2c_write(Gyro_MPU6050_Address, CONFIG, 0x06);
         // SampleRate = Gyro output rate / (1 + SMPLRT_DIV)
         // where Gyroscope Output Rate = 8kHz when the DLPF is disabled (DLPF_CFG = 0 or 7),
         // and 1kHz when the DLPF is enabled
-        Gyro_i2c_write(Gyro_MPU6050_Address, SMPLRT_DIV, 15); // (15): 60Hz //(255):4 Hz
+        //Gyro_i2c_write(Gyro_MPU6050_Address, SMPLRT_DIV, 15); // (15): 60Hz //(255):4 Hz
+        Gyro_i2c_write(Gyro_MPU6050_Address, SMPLRT_DIV, 0x00); // (15): 60Hz //(255):4 Hz
         // GYRO_CONFIG, FS_SEL, Full Scale Range,
         // 0x18:± 2000°/s, 0x10: 1000°/s, 0x08: ± 500 °/s, 0x00:± 250 °/s
         Gyro_i2c_write(Gyro_MPU6050_Address, GYRO_CONFIG, 0x00);
@@ -196,6 +198,97 @@ void Gyro_MPU6050_Calibration(int x)
 // estimated now.  Alpha depends on the sampling rate...
 #define COMP_ALFA       0.93
 
+static portTickType last_timer;
+static double kalAngleX, kalAngleY, kalAngleZ; // Calculate the angle using a Kalman filter
+static double gyroXangle, gyroYangle, gyroZangle; // Angle calculate using the gyro
+
+void Gyro_MPU6050_Kalman_Angle_Start(void)
+{
+    int accX, accY, accZ;
+    int gyroX, gyroY, gyroZ;
+
+    double accXangle, accYangle, accZangle; // Angle calculate using the accelerometer
+
+    gyroX = Gyro_MPU6050_GetData(GYRO_XOUT_H) - base_gyro_x;
+    gyroY = Gyro_MPU6050_GetData(GYRO_YOUT_H) - base_gyro_y;
+    gyroZ = Gyro_MPU6050_GetData(GYRO_ZOUT_H) - base_gyro_z;
+    accX = Gyro_MPU6050_GetData(ACCEL_XOUT_H);
+    accY = Gyro_MPU6050_GetData(ACCEL_YOUT_H);
+    accZ = Gyro_MPU6050_GetData(ACCEL_ZOUT_H);
+
+    // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
+    // We then convert it to 0 to 2π and then from radians to degrees
+    accYangle = (atan2(accX,accZ)+PI)*RAD_TO_DEG;
+    accXangle = (atan2(accY,accZ)+PI)*RAD_TO_DEG;
+    accZangle = 0;
+    //Q: can we get it (for example) from the accelerometer output only as accZangle = (atan2(accX,accY)+PI)*RAD_TO_DEG?
+    //A: No it is not possible to estimate yaw using an accelerometer. Remember that each axis all measure the gravitational
+    //   force in their respective axis -- see them as vectors. When you rotate the IMU along the z-axis none of the axis
+    //   will change, as the gravitational force doesn’t change in any of the axis.
+    //   You will need a gyro and a magnetometer to estimate yaw.
+    Kalman_Init(KALMAN_AXIS_X);
+    Kalman_Init(KALMAN_AXIS_Y);
+
+    Kalman_setAngle(KALMAN_AXIS_X, accXangle); // Set starting angle
+    Kalman_setAngle(KALMAN_AXIS_Y, accYangle); // Set starting angle
+
+    gyroXangle = accXangle;
+    gyroYangle = accYangle;
+    gyroZangle = accZangle;
+
+    kalAngleX = kalAngleY = kalAngleY = 0;
+    last_timer = xTaskGetTickCount();
+}
+
+void Gyro_MPU6050_Kalman_Angle_Get(int *angleX, int *angleY, int *angleZ)
+{
+    int accX, accY, accZ;
+    int gyroX, gyroY, gyroZ;
+
+    double accXangle, accYangle, accZangle; // Angle calculate using the accelerometer
+    double gyroXrate, gyroYrate, gyroZrate;
+
+    gyroX = Gyro_MPU6050_GetData(GYRO_XOUT_H) - base_gyro_x;
+    gyroY = Gyro_MPU6050_GetData(GYRO_YOUT_H) - base_gyro_y;
+    gyroZ = Gyro_MPU6050_GetData(GYRO_ZOUT_H) - base_gyro_z;
+    accX = Gyro_MPU6050_GetData(ACCEL_XOUT_H);
+    accY = Gyro_MPU6050_GetData(ACCEL_YOUT_H);
+    accZ = Gyro_MPU6050_GetData(ACCEL_ZOUT_H);
+
+    // atan2 outputs the value of -π to π (radians) - see http://en.wikipedia.org/wiki/Atan2
+    // We then convert it to 0 to 2π and then from radians to degrees
+    accYangle = (atan2(accX,accZ)+PI)*RAD_TO_DEG;
+    accXangle = (atan2(accY,accZ)+PI)*RAD_TO_DEG;
+    accZangle = 0;
+    //Q: can we get it (for example) from the accelerometer output only as accZangle = (atan2(accX,accY)+PI)*RAD_TO_DEG?
+    //A: No it is not possible to estimate yaw using an accelerometer. Remember that each axis all measure the gravitational
+    //   force in their respective axis -- see them as vectors. When you rotate the IMU along the z-axis none of the axis
+    //   will change, as the gravitational force doesn’t change in any of the axis.
+    //   You will need a gyro and a magnetometer to estimate yaw.
+           // Convert gyro values to degrees/sec
+    gyroXrate = (double)gyroX/131.0;
+    gyroYrate = -((double)gyroY/131.0);
+    gyroZrate = ((double)gyroZ/131.0);
+
+    //gyroXangle += gyroXrate*((double)(xTaskGetTickCount()-last_timer)/1000.0); // Calculate gyro angle without any filter
+    //gyroYangle += gyroYrate*((double)(xTaskGetTickCount()-last_timer)/1000.0);
+    gyroZangle += gyroZrate*((double)(xTaskGetTickCount()-last_timer)/1000.0);
+
+    // Apply the complementary filter to figure out the change in angle - choice of alpha is
+    // estimated now.  Alpha depends on the sampling rate...
+    // Regis, set the Alpha as 0.93
+    kalAngleX = Kalman_getAngle(KALMAN_AXIS_X, accXangle, gyroXrate, (double)(xTaskGetTickCount()-last_timer)/1000.0); // Calculate the angle using a Kalman filter
+    kalAngleY = Kalman_getAngle(KALMAN_AXIS_Y, accYangle, gyroYrate, (double)(xTaskGetTickCount()-last_timer)/1000.0); // Calculate the angle using a Kalman filter
+    kalAngleZ = gyroZangle; //Accelerometer doesn't give z-angle
+ 
+    last_timer = xTaskGetTickCount();
+
+    *angleX = kalAngleX;
+    *angleY = kalAngleY;
+    *angleZ = kalAngleZ;
+}
+
+
 void vTask_Gyro_MPU6050_Kalman(void *pvParameters )
 {
     int accX, accY, accZ;
@@ -215,7 +308,7 @@ void vTask_Gyro_MPU6050_Kalman(void *pvParameters )
 
     x = i = 0;
     Gyro_MPU6050_Init();
-    Gyro_MPU6050_Calibration(10);
+    Gyro_MPU6050_Calibration(20);
 
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
@@ -246,10 +339,16 @@ void vTask_Gyro_MPU6050_Kalman(void *pvParameters )
             Kalman_Init(KALMAN_AXIS_X);
             Kalman_Init(KALMAN_AXIS_Y);
 
+#if 0
+            Kalman_setAngle(KALMAN_AXIS_X, 0); // Set starting angle
+            Kalman_setAngle(KALMAN_AXIS_Y, 0); // Set starting angle
+
+            gyroXangle = gyroYangle = gyroZangle = 0;
+            compAngleX = compAngleY = compAngleZ = 0;
+#endif
             Kalman_setAngle(KALMAN_AXIS_X, accXangle); // Set starting angle
             Kalman_setAngle(KALMAN_AXIS_Y, accYangle); // Set starting angle
 
-            //kalmanY_setAngle(accYangle);
             gyroXangle = accXangle;
             gyroYangle = accYangle;
             gyroZangle = accZangle;
@@ -268,10 +367,9 @@ void vTask_Gyro_MPU6050_Kalman(void *pvParameters )
             gyroYrate = -((double)gyroY/131.0);
             gyroZrate = ((double)gyroZ/131.0);
   
-            gyroXangle += gyroXrate*((double)(xTaskGetTickCount()-timer)/1000.0); // Calculate gyro angle without any filter
-            gyroYangle += gyroYrate*((double)(xTaskGetTickCount()-timer)/1000.0);
-            gyroZangle_temp = gyroZrate*((double)(xTaskGetTickCount()-timer)/1000.0);
-            gyroZangle += gyroZangle_temp;
+            //gyroXangle += gyroXrate*((double)(xTaskGetTickCount()-timer)/1000.0); // Calculate gyro angle without any filter
+            //gyroYangle += gyroYrate*((double)(xTaskGetTickCount()-timer)/1000.0);
+            gyroZangle += gyroZrate*((double)(xTaskGetTickCount()-timer)/1000.0);
 
             ////gyroXangle += kalmanX.getRate()*((double)(micros()-timer)/1000000); // Calculate gyro angle using the unbiased rate
             ////gyroYangle += kalmanY.getRate()*((double)(micros()-timer)/1000000);
