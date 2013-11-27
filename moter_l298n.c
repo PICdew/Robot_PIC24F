@@ -86,6 +86,11 @@ int Motor_L298N_Init(void)
     TRISAbits.TRISA14 = 0;      //output
     TRISAbits.TRISA15 = 0;      //output
 
+    ODCAbits.ODA4 = 1;
+    ODCAbits.ODA5 = 1;
+    ODCAbits.ODA14 = 1;
+    ODCAbits.ODA15 = 1;
+
     _motor_dir[MOTOR_L] = MOTOR_STOP;
     _motor_dir[MOTOR_R] = MOTOR_STOP;
 
