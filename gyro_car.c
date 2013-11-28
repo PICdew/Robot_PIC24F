@@ -33,6 +33,7 @@ void vTask_Gyro_Car(void *pvParameters )
 {
     int gyro_x, gyro_y, gyro_z;
     int base_x, base_y, base_z;
+    int dir_y, dir_abs_y;
     int x;
     portTickType xLastWakeTime;
 
@@ -44,36 +45,35 @@ void vTask_Gyro_Car(void *pvParameters )
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil(&xLastWakeTime, 500);
+        vTaskDelayUntil(&xLastWakeTime, 80);
         Gyro_MPU6050_Kalman_Angle_Get(&gyro_x, &gyro_y, &gyro_z);
 
-        gyro_y = gyro_y - base_y;
+        dir_y = gyro_y - base_y;
 
-        if (gyro_y > 0 && gyro_y < 30)
-        {
-            Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
-            Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
-        }
-        else
+        dir_abs_y = abs(dir_y);
+        if (dir_abs_y > 20)
         {
             Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
             Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
         }
-
-
-        if (gyro_y < 0 && gyro_y > -30)
+        else
+        if (dir_y > 3)
         {
             Motor_Dir_Set(MOTOR_L, MOTOR_CW);
             Motor_Dir_Set(MOTOR_R, MOTOR_CW);
         }
         else
+        if (dir_y < -3)
         {
-            Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
-            Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+            Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+            Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
         }
+        delay_ms(dir_abs_y*10);
+        Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+        Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
 
         x = 0;
-        LCD_Show_Value(x, 0, gyro_x, 10, 4);
+        LCD_Show_Value(x, 0, dir_y, 10, 4);
         x += 5;
         LCD_Show_Value(x, 0, gyro_y, 10, 4);
         x += 5;
