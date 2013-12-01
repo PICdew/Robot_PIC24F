@@ -16,6 +16,7 @@ void PwmInit(void);
 void Servo_SG90_Rotation(int d);
 void Servo_SG90_Move(int sw);
 void Servo_SG90_Init(void);
+int PWM_Test (void);
 
 
 #endif

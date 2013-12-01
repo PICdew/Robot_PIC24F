@@ -15,6 +15,13 @@ L298N(IN3) => [J8]RA14(5)-RPI36/SCL1/CN43/RA14(66)
 L298N(IN4) => [J8]RA15(4)-RPI35/SDA1/CN44/RA15(67)
 12V => 9V (BAT/Adaptor)
 GND => GND
+
+<<Moter+PWM>>
+L298N(IN1) => pin#25, J5#01,AN0
+L298N(IN2) => pin#24, J5#02,AN1
+L298N(IN3) => pin#23, J5#03,AN2
+L298N(IN4) => pin#21, J5#05,AN4
+
 =====================================================
 
 <<Sonar>>

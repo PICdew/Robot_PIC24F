@@ -31,8 +31,12 @@
 //   to determine the correct configuration bit settings
 #if defined __C30__ || defined __XC16__
     #if defined(__PIC24FJ256GB110__)
-        _CONFIG2(FNOSC_PRIPLL & POSCMOD_HS & PLL_96MHZ_ON & PLLDIV_DIV2) // Primary HS OSC with PLL, USBPLL /2
-        _CONFIG1(JTAGEN_OFF & FWDTEN_OFF & ICS_PGx2)   // JTAG off, watchdog timer off
+        //2013.11.30 Regis modify
+        _CONFIG1( JTAGEN_OFF & GCP_OFF & GWRP_OFF & COE_OFF & FWDTEN_OFF & ICS_PGx2)
+        _CONFIG2( IESO_OFF & FCKSM_CSDCMD & OSCIOFNC_OFF & POSCMOD_HS & FNOSC_PRIPLL & PLLDIV_DIV2 & IOL1WAY_ON)
+        _CONFIG3( WPCFG_WPCFGDIS & WPDIS_WPDIS)		//Disable erase/write protect of all memory regions.
+        //_CONFIG2(FNOSC_PRIPLL & POSCMOD_HS & PLL_96MHZ_ON & PLLDIV_DIV2) // Primary HS OSC with PLL, USBPLL /2
+        //_CONFIG1(JTAGEN_OFF & FWDTEN_OFF & ICS_PGx2)   // JTAG off, watchdog timer off
     #elif defined(__PIC24FJ64GB004__)
         _CONFIG1(WDTPS_PS1 & FWPSA_PR32 & WINDIS_OFF & FWDTEN_OFF & ICS_PGx1 & GWRP_OFF & GCP_OFF & JTAGEN_OFF)
         _CONFIG2(POSCMOD_HS & I2C1SEL_PRI & IOL1WAY_OFF & OSCIOFNC_ON & FCKSM_CSDCMD & FNOSC_PRIPLL & PLL96MHZ_ON & PLLDIV_DIV2 & IESO_ON)
@@ -148,6 +152,8 @@ int main( void )
         a = 1 - a;
     }
 
+    //PWM_Test();
+
     InitI2C();
     // config CN interrupt and reset the register.
     CN_Function_Init();
@@ -166,7 +172,7 @@ int main( void )
     //xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test7, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 5, NULL );
+    xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050_Kalman, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
@@ -217,6 +223,7 @@ static void vTask_test8(void *pvParameters)
     }
 
 }
+
 static void vTask_test6(void *pvParameters)
 {
 	unsigned char a;
@@ -259,49 +266,38 @@ static void vTask_test7(void *pvParameters)
 {
 	unsigned char a;
 	portTickType xLastWakeTime;
-        int distance, n, m;
 	(void)pvParameters;
 
 	a = 0;
-        n = m = 0;
-        Motor_L298N_Init();
+        Motor_L298N_PWM_Init(1000);  //1kHz
 	xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
-            //vTaskDelayUntil(&xLastWakeTime, 600);
-            distance = Sonar_HCSR04_Get_Distance();
-            LCD_Show_Value(2, 0, distance, 10, 6);
-            if (distance < 8)
+            vTaskDelayUntil(&xLastWakeTime, 2000);
+            switch (a)
             {
-                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
-                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
-                vTaskDelay(2000);
-                Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
-                Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
-                vTaskDelay(200);
-                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
-                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
-                vTaskDelay(3000);
-                if (a)
-                {
-                    Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
-                    Motor_Dir_Set(MOTOR_R, MOTOR_CW);
-                }
-                else
-                {
-                    Motor_Dir_Set(MOTOR_L, MOTOR_CW);
-                    Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
-                }
-                vTaskDelay(150);
-                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
-                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+                case 0:
+                    Motor_PWM_Dir_Set(MOTOR_L, MOTOR_CW, 100);
+                    Motor_PWM_Dir_Set(MOTOR_R, MOTOR_CW, 100);
+                    break;
+                case 1:
+                    Motor_PWM_Dir_Set(MOTOR_L, MOTOR_CCW, 75);
+                    Motor_PWM_Dir_Set(MOTOR_R, MOTOR_CCW, 75);
+                    break;
+                case 2:
+                    Motor_PWM_Dir_Set(MOTOR_L, MOTOR_CCW, 50);
+                    Motor_PWM_Dir_Set(MOTOR_R, MOTOR_CW, 50);
+                    break;
+                case 3:
+                    Motor_PWM_Dir_Set(MOTOR_L, MOTOR_CW, 25);
+                    Motor_PWM_Dir_Set(MOTOR_R, MOTOR_CCW, 25);
+                    break;
             }
-            else
-            {
-                Motor_Dir_Set(MOTOR_L, MOTOR_CW);
-                Motor_Dir_Set(MOTOR_R, MOTOR_CW);
-            }
-            a = 1 - a;
+            LCD_Show_Value(2, 0, a, 10, 3);
+            a++;
+            if (a > 3)
+                a = 0;
+
         }
 }
 
