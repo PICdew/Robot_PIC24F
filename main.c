@@ -152,6 +152,8 @@ int main( void )
         a = 1 - a;
     }
 
+    UART_Test();
+
     //PWM_Test();
 
     InitI2C();
@@ -164,6 +166,7 @@ int main( void )
     xSonar_Queue = xQueueCreate(20, sizeof(t_CN_INT_data));
 
     //PwmInit();
+    // max: hi-priority, 1: low priority
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
     xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
@@ -175,8 +178,10 @@ int main( void )
     xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050_Kalman, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
-    //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 3, NULL );
-    xTaskCreate( vTask_Gyro_Car, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 4, NULL );
+    xTaskCreate( vTask_Gyro_Car, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_Car_PID, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
 
@@ -408,6 +413,7 @@ static void vTask_test1 (void *pvParameters )
 {
     unsigned char  a;
     portTickType xLastWakeTime;
+    (void)pvParameters; // prevent compiler worning/error
 
     // this is test  git
     a = 0;
@@ -425,6 +431,7 @@ static void vTask_test2 (void *pvParameters )
 {
     unsigned char  a;
    portTickType xLastWakeTime;
+   (void)pvParameters; // prevent compiler worning/error
 
     a = 0;
     xLastWakeTime = xTaskGetTickCount();

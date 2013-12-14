@@ -39,6 +39,7 @@
       <itemPath>pwm_func.c</itemPath>
       <itemPath>kalman.c</itemPath>
       <itemPath>gyro_car.c</itemPath>
+      <itemPath>uart1.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

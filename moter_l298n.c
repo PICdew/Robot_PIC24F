@@ -47,7 +47,7 @@ static int _motor_rpm;
 
 void Motor_RPM_Set(int volt)
 {
-    // HC01-120, 9v: 149.4rpm, 2.49rps
+    // HC01-120, 9v: 149.4rpm, 2.49rps, 0.4s/rotate, 9degree/ms=> (150rpm*360)/60/1000
     _motor_rpm = volt * 16.6;
     
 }
@@ -142,16 +142,16 @@ void Motor_L298N_PWM_Init(int period)
     //_OC_period = 0x3e7f;
 
     // set the port as output
-    TRISBbits.TRISB0 = 0;       //output, RP0/RB0
-    TRISBbits.TRISB1 = 0;       //output, RP1/RB1
+    TRISBbits.TRISB0 = 0;      //output, RP0/RB0
+    TRISBbits.TRISB1 = 0;      //output, RP1/RB1
     TRISBbits.TRISB2 = 0;      //output, RP13/RB2
     TRISBbits.TRISB4 = 0;      //output, RP28/RB4
 
     // it doesn't work for this way ...Regis 11/28
-    //ODCAbits.ODA4 = 1;
-    //ODCAbits.ODA5 = 1;
-    //ODCAbits.ODA14 = 1;
-    //ODCAbits.ODA15 = 1;
+    //ODCBbits.ODB0 = 1;
+    //ODCBbits.ODB1 = 1;
+    //ODCBbits.ODB2 = 1;
+    //ODCBbits.ODB4 = 1;
 
     // Configure Output Functions *********************
     RPOR0bits.RP0R      = OC1_IO;	// RR0	pin#25, J5#01,AN0,
@@ -228,10 +228,11 @@ void Motor_L298N_PWM_Init(int period)
 void Motor_PWM_Dir_Set(int motor_id, int motor_dir, int duty)
 {
     double tmp;
+    int reg_duty;
 
     tmp = duty;
     tmp = _OC_period * tmp / 100.0;
-    duty = tmp;
+    reg_duty = tmp;
 
     //duty = 0x1f3f;
     _motor_dir[motor_id] = motor_dir;
@@ -244,12 +245,12 @@ void Motor_PWM_Dir_Set(int motor_id, int motor_dir, int duty)
                 OC2R = 0;
                 break;
             case MOTOR_CW:
-                OC1R = duty;
+                OC1R = reg_duty;
                 OC2R = 0;
                 break;
             case MOTOR_CCW:
                 OC1R = 0;
-                OC2R = duty;
+                OC2R = reg_duty;
                 break;
             default:
                 LED_ERR(5);
@@ -267,12 +268,12 @@ void Motor_PWM_Dir_Set(int motor_id, int motor_dir, int duty)
                 OC4R = 0;
                 break;
             case MOTOR_CW:
-                OC3R = duty;
+                OC3R = reg_duty;
                 OC4R = 0;
                 break;
             case MOTOR_CCW:
                 OC3R = 0;
-                OC4R = duty;
+                OC4R = reg_duty;
                 break;
             default:
                 LED_ERR(5);

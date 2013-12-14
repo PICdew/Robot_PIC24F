@@ -411,6 +411,7 @@ void vTask_Gyro_MPU6050_Kalman(void *pvParameters )
  */
 void vTask_Gyro_MPU6050(void *pvParameters )
 {
+    (void)pvParameters; // prevent compiler worning/error
     int acc_x, acc_y, acc_z, temp;
     int gyro_x, gyro_y, gyro_z;
     int x;
