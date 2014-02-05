@@ -305,7 +305,7 @@ void vTask_Gyro_Car_5(void *pvParameters )
     (void)pvParameters; // prevent compiler worning/error
     int gyro_x, gyro_y, gyro_z;
     int base_x, base_y, base_z;
-    double Ki, Kp, Kd, P, P_last, I, I_last, D, D_last, U, E, E_last;
+    //double Ki, Kp, Kd, P, P_last, I, I_last, D, D_last, U, E, E_last;
     int Ei, Ui, PWM;
 
     char m[100];
@@ -319,11 +319,11 @@ void vTask_Gyro_Car_5(void *pvParameters )
     car2.balance_angle = base_y;
     // set the timer as 15 ms in initial stage
     xLastWakeTime = xTaskGetTickCount();
-    E_last = I_last = P_last = D_last = 0;
+    //E_last = I_last = P_last = D_last = 0;
 
     for( ;; )
     {
-        vTaskDelayUntil(&xLastWakeTime, car2.Task_timer);
+        //vTaskDelayUntil(&xLastWakeTime, car2.Task_timer);
         Gyro_MPU6050_Kalman_Angle_Get(&gyro_x, &gyro_y, &gyro_z);
         Ei = gyro_y - car2.balance_angle;
 
@@ -337,14 +337,14 @@ void vTask_Gyro_Car_5(void *pvParameters )
             else
             if (Ei > car2.angle_step) //body back down
             {
-                Motor_Dir_Set(MOTOR_L, MOTOR_CW);
-                Motor_Dir_Set(MOTOR_R, MOTOR_CW);
+                Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+                Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
             }
             else
             if (Ei < -car2.angle_step) // body front down
             {
-                Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
-                Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
+                Motor_Dir_Set(MOTOR_L, MOTOR_CW);
+                Motor_Dir_Set(MOTOR_R, MOTOR_CW);
             }
             else
             {
@@ -357,6 +357,9 @@ void vTask_Gyro_Car_5(void *pvParameters )
             Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
             Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
         }
+
+        // check the command from BT
+        UART_BT_Cmd( );
 
         if (car2.debug)
         {

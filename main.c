@@ -170,7 +170,6 @@ int main( void )
         delay_ms(500);
         a = 1 - a;
     }
-    Lcd_1602_display_string(0,0,"System Go",9);
 
     //PwmInit();
     // max: hi-priority, 1: low priority
@@ -198,6 +197,7 @@ int main( void )
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
 
     /* Finally start the scheduler. */
+    Lcd_1602_display_string(0,0,"System Go",9);
     vTaskStartScheduler();
 
     /* Will only reach here if there is insufficient heap available to start

@@ -274,6 +274,8 @@ void UART_BT_Init(void)
     _U2RXIE = 1;            // enable U2RX interrupt
     _U2TXIE = 1;            // enable U2TX interrupt
 
+    UART_FlushFIFO(UART_BT);
+    UART_PutString(UART_BT, "BT_Ready\r\n");
 }
 
 //UART transmit function, parameter Ch is the character to send
@@ -343,6 +345,124 @@ int atoi(char *s)
     return (int)strtoul(s, NULL, 10);
 }
 
+int UART_BT_Cmd(void)
+{
+    int i,n,m;
+    char cmd[30];
+        n = Check_Rx_buffer(UART_BT);
+        //sprintf(cmd, "n=%d\n", n);
+        //UART_PutString(UART_BT, cmd);
+        if (n >= 2)
+        {
+            n = n/2;
+            // parser the command
+            for (i = 0; i < n; i++)
+            {
+                cmd[0] = UART_PopFIFO(UART_BT);
+                cmd[1] = UART_PopFIFO(UART_BT);
+                cmd[2] = 0;
+                //UART_PutString(UART_BT, cmd);
+                m = atoi(cmd);
+                sprintf(cmd, "Cmd=%d => ", m);
+                UART_PutString(UART_BT, cmd);
+                switch (m)
+                {
+                    case CMD_DEBUG:
+                        Gyro_Car_Debug();
+                        break;
+                    case CMD_TASK_TIME_U:
+                        Gyro_Car_TaskTimer_Up();
+                        break;
+                    case CMD_TASK_TIME_D:
+                        Gyro_Car_TaskTimer_Down();
+                        break;
+                    case CMD_KP_U:
+                        Gyro_Car_Kp_Up();
+                        break;
+                    case CMD_KP_D:
+                        Gyro_Car_Kp_Down();
+                        break;
+                    case CMD_KI_U:
+                        Gyro_Car_Ki_Up();
+                        break;
+                    case CMD_KI_D:
+                        Gyro_Car_Ki_Down();
+                        break;
+                    case CMD_KD_U:
+                        Gyro_Car_Kd_Up();
+                        break;
+                    case CMD_KD_D:
+                        Gyro_Car_Kd_Down();
+                        break;
+                    case CMD_MOTOR:
+                        Gyro_Car_Motor();
+                        break;
+                    case CMD_BL_U:
+                        Gyro_Car_Balance_Up();
+                        break;
+                    case CMD_BL_D:
+                        Gyro_Car_Balance_Down();
+                        break;
+                    case CMD_ANGLE_MAX_U:
+                        Gyro_Car_Angle_Max_Up();
+                        break;
+                    case CMD_ANGLE_MAX_D:
+                        Gyro_Car_Angle_Max_Down();
+                        break;
+                    case CMD_ANGLE_MIN_U:
+                        Gyro_Car_Angle_Min_Up();
+                        break;
+                    case CMD_ANGLE_MIN_D:
+                        Gyro_Car_Angle_Min_Down();
+                        break;
+                    case CMD_ANGLE_STEP_U:
+                        Gyro_Car_Angle_Step_Up();
+                        break;
+                    case CMD_ANGLE_STEP_D:
+                        Gyro_Car_Angle_Step_Down();
+                        break;
+                    case CMD_PWM_STEP_U:
+                        Gyro_Car_PWM_Step_Up();
+                        break;
+                    case CMD_PWM_STEP_D:
+                        Gyro_Car_PWM_Step_Down();
+                        break;
+                    case CMD_PWM_STATIC_U:
+                        Gyro_Car_PWM_Static_Up();
+                        break;
+                    case CMD_PWM_STATIC_D:
+                        Gyro_Car_PWM_Static_Down();
+                        break;
+                    case CMD_CAR_FF:
+                        Gyro_Car_PWM_FF();
+                        break;
+                    case CMD_CAR_BK:
+                        Gyro_Car_PWM_BK();
+                        break;
+                    case CMD_CAR_STOP:
+                        Gyro_Car_PWM_Stop();
+                        break;
+                    case CMD_CAR_RIGHT:
+                        Gyro_Car_PWM_Right();
+                        break;
+                    case CMD_CAR_LEFT:
+                        Gyro_Car_PWM_Left();
+                        break;
+                    case CMD_CAR_SPEED_U:
+                        Gyro_Car_PWM_Speed_Up();
+                        break;
+                    case CMD_CAR_SPEED_D:
+                        Gyro_Car_PWM_Speed_Down();
+                        break;
+                    default:
+                        UART_PutString(UART_BT, "no cmd!\r\n");
+                        break;
+                }
+            }
+        }
+}
+
+
 void vTask_UART_BT(void *pvParameters )
 {
     (void)pvParameters; // prevent compiler worning/error
@@ -350,9 +470,8 @@ void vTask_UART_BT(void *pvParameters )
     int i,n,m;
     char cmd[30];
 
-    UART_FlushFIFO(UART_BT);
     UART_BT_Init();
-    UART_PutString(UART_BT, "BT_Ready\r\n");
+    //UART_PutString(UART_BT, "BT_Ready\r\n");
 
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
