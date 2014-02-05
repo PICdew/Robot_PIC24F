@@ -43,6 +43,8 @@ void vTask_Gyro_Car_1(void *pvParameters );
 void vTask_Gyro_Car_PID(void *pvParameters );
 void vTask_Gyro_Car_2(void *pvParameters );
 void vTask_Gyro_Car_3(void *pvParameters );
+void vTask_Gyro_Car_4(void *pvParameters );
+void vTask_Gyro_Car_5(void *pvParameters );
 
 void Gyro_Car_Debug(void);
 void Gyro_Car_TaskTimer_Up(void);
@@ -74,7 +76,6 @@ void Gyro_Car_PWM_Right(void);
 void Gyro_Car_PWM_Left(void);
 void Gyro_Car_PWM_Speed_Up(void);
 void Gyro_Car_PWM_Speed_Down(void);
-void vTask_Gyro_Car_4(void *pvParameters );
 
 #endif
 

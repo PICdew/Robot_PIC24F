@@ -140,8 +140,8 @@ void Gyro_Car_TaskTimer_Down(void)
 {
     char m[20];
     car2.Task_timer -= 1;
-    if (car2.Task_timer < 10)
-        car2.Task_timer = 10;
+    if (car2.Task_timer < 5)
+        car2.Task_timer = 5;
     sprintf(m,"Timer=%d\r\n", car2.Task_timer);
     UART_PutString(UART_BT, m);
 }
@@ -297,6 +297,82 @@ void Gyro_Car_PWM_Speed_Down(void)
     sprintf(m,"PWM_step=%d %d\r\n", car2.PWM_step, car2.PWM_Min);
     UART_PutString(UART_BT, m);
 }
+
+
+// balance car, for battery12v to 6v + BT control
+void vTask_Gyro_Car_5(void *pvParameters )
+{
+    (void)pvParameters; // prevent compiler worning/error
+    int gyro_x, gyro_y, gyro_z;
+    int base_x, base_y, base_z;
+    double Ki, Kp, Kd, P, P_last, I, I_last, D, D_last, U, E, E_last;
+    int Ei, Ui, PWM;
+
+    char m[100];
+    portTickType xLastWakeTime;
+    Motor_L298N_Init();
+    Gyro_MPU6050_Init();
+    Gyro_MPU6050_Calibration(10);
+    Gyro_MPU6050_Kalman_Angle_Start();
+    // get the balance point
+    Gyro_MPU6050_Kalman_Angle_Get(&base_x, &base_y, &base_z);
+    car2.balance_angle = base_y;
+    // set the timer as 15 ms in initial stage
+    xLastWakeTime = xTaskGetTickCount();
+    E_last = I_last = P_last = D_last = 0;
+
+    for( ;; )
+    {
+        vTaskDelayUntil(&xLastWakeTime, car2.Task_timer);
+        Gyro_MPU6050_Kalman_Angle_Get(&gyro_x, &gyro_y, &gyro_z);
+        Ei = gyro_y - car2.balance_angle;
+
+        if (car2.motor_onoff)
+        {
+            if (Ei > car2.Angle_Max || Ei < car2.Angle_Min)
+            {
+                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+            }
+            else
+            if (Ei > car2.angle_step) //body back down
+            {
+                Motor_Dir_Set(MOTOR_L, MOTOR_CW);
+                Motor_Dir_Set(MOTOR_R, MOTOR_CW);
+            }
+            else
+            if (Ei < -car2.angle_step) // body front down
+            {
+                Motor_Dir_Set(MOTOR_L, MOTOR_CCW);
+                Motor_Dir_Set(MOTOR_R, MOTOR_CCW);
+            }
+            else
+            {
+                Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+                Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+            }
+        }
+        else
+        {
+            Motor_Dir_Set(MOTOR_L, MOTOR_STOP);
+            Motor_Dir_Set(MOTOR_R, MOTOR_STOP);
+        }
+
+        if (car2.debug)
+        {
+            sprintf(m, "%d ", Ei);
+            UART_PutString(UART_BT, m);
+        }
+
+        if (BTN3_Pressed())
+        {
+            car2.motor_onoff = 1 - car2.motor_onoff;
+            sprintf(m, "Motor=%d\r\n", car2.motor_onoff);
+            UART_PutString(UART_BT, m);
+        }
+    }
+}
+
 
 //4 wheels, for battery12v to 6v + BT control
 void vTask_Gyro_Car_4(void *pvParameters )

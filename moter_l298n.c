@@ -65,16 +65,16 @@ void Motor_Dir_Set(int motor_id, int motor_dir)
         switch (motor_dir)
         {
             case MOTOR_STOP:
-                _LATA4 = 0;
-                _LATA5 = 0;
+                _LATB0 = 0;
+                _LATB1 = 0;
                 break;
             case MOTOR_CW:
-                _LATA4 = 1;
-                _LATA5 = 0;
+                _LATB0 = 1;
+                _LATB1 = 0;
                 break;
             case MOTOR_CCW:
-                _LATA4 = 0;
-                _LATA5 = 1;
+                _LATB0 = 0;
+                _LATB1 = 1;
                 break;
             default:
                 LED_ERR(5);
@@ -88,16 +88,16 @@ void Motor_Dir_Set(int motor_id, int motor_dir)
         switch (motor_dir)
         {
             case MOTOR_STOP:
-                _LATA14 = 0;
-                _LATA15 = 0;
+                _LATB2 = 0;
+                _LATB4 = 0;
                 break;
             case MOTOR_CW:
-                _LATA14 = 1;
-                _LATA15 = 0;
+                _LATB2 = 1;
+                _LATB4 = 0;
                 break;
             case MOTOR_CCW:
-                _LATA14 = 0;
-                _LATA15 = 1;
+                _LATB2 = 0;
+                _LATB4 = 1;
                 break;
             default:
                 LED_ERR(5);
@@ -110,17 +110,12 @@ void Motor_Dir_Set(int motor_id, int motor_dir)
 
 void Motor_L298N_Init(void)
 {
-   // set the port as output
-    TRISAbits.TRISA4 = 0;       //output
-    TRISAbits.TRISA5 = 0;       //output
-    TRISAbits.TRISA14 = 0;      //output
-    TRISAbits.TRISA15 = 0;      //output
 
-    // it doesn't work for this way ...Regis 11/28
-    //ODCAbits.ODA4 = 1;
-    //ODCAbits.ODA5 = 1;
-    //ODCAbits.ODA14 = 1;
-    //ODCAbits.ODA15 = 1;
+    // set the port as output
+    TRISBbits.TRISB0 = 0;      //output, RP0/RB0
+    TRISBbits.TRISB1 = 0;      //output, RP1/RB1
+    TRISBbits.TRISB2 = 0;      //output, RP13/RB2
+    TRISBbits.TRISB4 = 0;      //output, RP28/RB4
 
     _motor_dir[MOTOR_L] = MOTOR_STOP;
     _motor_dir[MOTOR_R] = MOTOR_STOP;

@@ -188,8 +188,9 @@ int main( void )
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 4, NULL );
     //xTaskCreate( vTask_Gyro_Car_1, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_2, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
-    xTaskCreate( vTask_Gyro_Car_3, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_Car_3, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_4, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    xTaskCreate( vTask_Gyro_Car_5, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_PID, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     xTaskCreate( vTask_UART_BT, ( signed char * )"UR", vTask_STACK_SIZE, NULL, 7, NULL );
 
