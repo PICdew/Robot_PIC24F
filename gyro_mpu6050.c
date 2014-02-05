@@ -272,8 +272,9 @@ void Gyro_MPU6050_Kalman_Angle_Get(int *angleX, int *angleY, int *angleZ)
 
     //gyroXangle += gyroXrate*((double)(xTaskGetTickCount()-last_timer)/1000.0); // Calculate gyro angle without any filter
     //gyroYangle += gyroYrate*((double)(xTaskGetTickCount()-last_timer)/1000.0);
-    gyroZangle += gyroZrate*((double)(xTaskGetTickCount()-last_timer)/1000.0);
-
+    //gyroZangle += gyroZrate*((double)(xTaskGetTickCount()-last_timer)/1000.0);
+    gyroZangle = gyroZrate;
+    
     // Apply the complementary filter to figure out the change in angle - choice of alpha is
     // estimated now.  Alpha depends on the sampling rate...
     // Regis, set the Alpha as 0.93

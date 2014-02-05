@@ -26,6 +26,7 @@
 #include "pwm_func.h"
 #include "kalman.h"
 #include "gyro_car.h"
+#include "uart1.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -105,11 +106,6 @@ void BTN_Init()
     TRISFbits.TRISF13 = 1;
     AD1PCFGLbits.PCFG11 = 1;
 }
-#define BTN5_Pressed()    ((PORTFbits.RF13  == 0)? TRUE : FALSE)
-#define BTN4_Pressed()    ((PORTFbits.RF12  == 0)? TRUE : FALSE)
-#define BTN3_Pressed()    ((PORTBbits.RB11  == 0)? TRUE : FALSE)
-#define BTN2_Pressed()    ((PORTAbits.RA1 == 0)? TRUE : FALSE)
-
 
 /*-----------------------------------------------------------*/
 
@@ -133,7 +129,7 @@ static void vTask_test8 (void *pvParameters );
 
 xQueueHandle xTest_Queue;
 
-#define vTask_STACK_SIZE    (configMINIMAL_STACK_SIZE * 5)
+#define vTask_STACK_SIZE    (configMINIMAL_STACK_SIZE * 4)
 /*
  * Create the demo tasks then start the scheduler.
  */
@@ -145,14 +141,16 @@ int main( void )
     BTN_Init();
     a = 0;
     
+#if 0
     while (!BTN2_Pressed())
     {
         LED_On(a);
         delay_ms(500);
         a = 1 - a;
     }
+#endif
 
-    UART_Test();
+    //UART_Test();
 
     //PWM_Test();
 
@@ -165,6 +163,15 @@ int main( void )
     xLCD_Queue = xQueueCreate(50, sizeof(t_LCD_data));
     xSonar_Queue = xQueueCreate(20, sizeof(t_CN_INT_data));
 
+    Lcd_1602_display_string(0,0,"Waiting",7);
+    while (!BTN2_Pressed())
+    {
+        LED_On(a);
+        delay_ms(500);
+        a = 1 - a;
+    }
+    Lcd_1602_display_string(0,0,"System Go",9);
+
     //PwmInit();
     // max: hi-priority, 1: low priority
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
@@ -175,12 +182,16 @@ int main( void )
     //xTaskCreate( vTask_test6, ( signed char * )"T6", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test7, ( signed char * )"T7", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test8, ( signed char * )"T8", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_LCD, ( signed char * )"LD", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Gyro_MPU6050_Kalman, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_Sonar_HCSR04, ( signed char * )"SO", vTask_STACK_SIZE, NULL, 4, NULL );
-    xTaskCreate( vTask_Gyro_Car, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_Car_1, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_Car_2, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    xTaskCreate( vTask_Gyro_Car_3, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_Car_4, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_PID, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    xTaskCreate( vTask_UART_BT, ( signed char * )"UR", vTask_STACK_SIZE, NULL, 7, NULL );
 
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );

@@ -131,6 +131,12 @@ void Motor_L298N_Init(void)
  *  period, it is "Hz", period = 1000 -> 1kHz
  */
 static int _OC_period;
+
+int Motor_L298N_PWN_Period(void)
+{
+    return _OC_period;
+}
+
 void Motor_L298N_PWM_Init(int period)
 {
     double cal_period;
@@ -283,6 +289,63 @@ void Motor_PWM_Dir_Set(int motor_id, int motor_dir, int duty)
     }
 }
 
+void Motor_PWM_Dir_Set_Raw(int motor_id, int motor_dir, int PWM)
+{
+    int PWM_Operate;
+
+    if (PWM > _OC_period)
+        PWM_Operate = _OC_period;
+    else
+        PWM_Operate = PWM;
+
+    //duty = 0x1f3f;
+    _motor_dir[motor_id] = motor_dir;
+    if (motor_id == MOTOR_L)
+    {
+        switch (motor_dir)
+        {
+            case MOTOR_STOP:
+                OC1R = 0;
+                OC2R = 0;
+                break;
+            case MOTOR_CW:
+                OC1R = PWM_Operate;
+                OC2R = 0;
+                break;
+            case MOTOR_CCW:
+                OC1R = 0;
+                OC2R = PWM_Operate;
+                break;
+            default:
+                LED_ERR(5);
+                break;
+
+        }
+    }
+    else
+    //if (motor_id == MOTOR_R)
+    {
+        switch (motor_dir)
+        {
+            case MOTOR_STOP:
+                OC3R = 0;
+                OC4R = 0;
+                break;
+            case MOTOR_CW:
+                OC3R = PWM_Operate;
+                OC4R = 0;
+                break;
+            case MOTOR_CCW:
+                OC3R = 0;
+                OC4R = PWM_Operate;
+                break;
+            default:
+                LED_ERR(5);
+                break;
+
+        }
+    }
+}
 
 
 

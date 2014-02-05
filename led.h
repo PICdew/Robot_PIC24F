@@ -38,4 +38,9 @@
 // for debug , Regis 2013/11/12
 #define LED_ERR(n) {LATE = n; while(1);}
 
+#define BTN5_Pressed()    ((PORTFbits.RF13  == 0)? TRUE : FALSE)
+#define BTN4_Pressed()    ((PORTFbits.RF12  == 0)? TRUE : FALSE)
+#define BTN3_Pressed()    ((PORTBbits.RB11  == 0)? TRUE : FALSE)
+#define BTN2_Pressed()    ((PORTAbits.RA1 == 0)? TRUE : FALSE)
+
 #endif
