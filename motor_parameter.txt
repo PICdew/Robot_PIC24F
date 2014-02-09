@@ -1,0 +1,4 @@
+motor_parameter
+
+Freq: 1.5kHz
+PWM speed Low: 3600

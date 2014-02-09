@@ -27,6 +27,7 @@
 #include "kalman.h"
 #include "gyro_car.h"
 #include "uart1.h"
+#include "balance_car.h"
 
 // Configuration bits for the device.  Please refer to the device datasheet for each device
 //   to determine the correct configuration bit settings
@@ -151,13 +152,12 @@ int main( void )
 #endif
 
     //UART_Test();
-
     //PWM_Test();
-
     InitI2C();
+    Lcd_1602_init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
     // config CN interrupt and reset the register.
     CN_Function_Init();
-    Lcd_1602_init(0x4E, 16, 2, LCD_5x8DOTS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
     xTest_Queue = xQueueCreate(20, sizeof(int));
     xLCD_Queue = xQueueCreate(50, sizeof(t_LCD_data));
@@ -170,11 +170,11 @@ int main( void )
         delay_ms(500);
         a = 1 - a;
     }
-
+    UART_BT_Init();
     //PwmInit();
     // max: hi-priority, 1: low priority
     xTaskCreate( vTask_test1, ( signed char * )"T1", vTask_STACK_SIZE, NULL, 2, NULL );
-    xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
+    //xTaskCreate( vTask_test2, ( signed char * )"T2", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test3, ( signed char * )"T3", vTask_STACK_SIZE, NULL, 2, NULL );
     //xTaskCreate( vTask_test4, ( signed char * )"T4", vTask_STACK_SIZE, NULL, 4, NULL );
     //xTaskCreate( vTask_test5, ( signed char * )"T5", vTask_STACK_SIZE, NULL, 2, NULL );
@@ -188,10 +188,11 @@ int main( void )
     //xTaskCreate( vTask_Gyro_Car_1, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_2, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_3, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
-    //xTaskCreate( vTask_Gyro_Car_4, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
-    xTaskCreate( vTask_Gyro_Car_5, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    xTaskCreate( vTask_Gyro_Car_4, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
+    //xTaskCreate( vTask_Gyro_Car_5, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
     //xTaskCreate( vTask_Gyro_Car_PID, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
-    xTaskCreate( vTask_UART_BT, ( signed char * )"UR", vTask_STACK_SIZE, NULL, 7, NULL );
+    //xTaskCreate( vTask_UART_BT, ( signed char * )"UR", vTask_STACK_SIZE, NULL, 7, NULL );
+    //xTaskCreate( vTask_Balance_Car_1, ( signed char * )"GY", vTask_STACK_SIZE, NULL, 5, NULL );
 
     /* Start the high frequency interrupt test. */
     //vSetupTimerTest( mainTEST_INTERRUPT_FREQUENCY );
@@ -432,9 +433,9 @@ static void vTask_test1 (void *pvParameters )
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil( &xLastWakeTime, 1000);
+        vTaskDelayUntil( &xLastWakeTime, 2000);
         // vTaskDelay( 2000 );
-        if (a != 0) {LED0_On();} else {LED0_Off();};
+        if (a != 0) {LED0_On();LED1_Off();} else {LED0_Off();LED1_On();};
         a = 1-a;
     }
 }
@@ -449,7 +450,7 @@ static void vTask_test2 (void *pvParameters )
     xLastWakeTime = xTaskGetTickCount();
     for( ;; )
     {
-        vTaskDelayUntil( &xLastWakeTime, 500);
+        vTaskDelayUntil( &xLastWakeTime, 1000);
         //vTaskDelay( 500 );
 
         if (a != 0) {LED1_On();} else {LED1_Off();};

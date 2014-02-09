@@ -40,6 +40,7 @@
       <itemPath>kalman.c</itemPath>
       <itemPath>gyro_car.c</itemPath>
       <itemPath>uart1.c</itemPath>
+      <itemPath>balance_car.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

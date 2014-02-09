@@ -10,6 +10,8 @@
 //****************************************
 /* Standard includes. */
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 /* Scheduler includes. */
 #include "FreeRTOS.h"
@@ -48,7 +50,7 @@
 //#define BRATE_SPI     34          // 115200 baud (BREGH=1)
 //#define BRATE_BT      34          // 115200 baud (BREGH=1)
 
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 64
 #define UART_NUM    2
 static unsigned char _buffer_u1[UART_NUM][BUFFER_SIZE];
 
@@ -61,6 +63,11 @@ static unsigned char _buffer_u1[UART_NUM][BUFFER_SIZE];
 //===============================================================================
 
 #define Check_Rx_buffer(uart)  _buffer_u1[uart][BUFFER_SIZE-3]
+
+unsigned char Check_Rx_Buffer(int uart)
+{
+    return Check_Rx_buffer(uart);
+}
 //******************************************************************************
 void UART_FlushFIFO(int uart)      // clear FIFO structure (without resetting the data)
 //******************************************************************************
@@ -142,21 +149,20 @@ void _ISR __attribute__((__auto_psv__)) _U1RXInterrupt(void)
 void _ISR __attribute__((__auto_psv__)) _U2TXInterrupt(void)
 {
     IFS1bits.U2TXIF = 0;
-    mLED_9 = 1 - mLED_9;
+    //mLED_9 = 1 - mLED_9;
 }
 
 //void __attribute__((__interrupt__, auto_psv)) _U1RXInterrupt(void)
 void _ISR __attribute__((__auto_psv__)) _U2RXInterrupt(void)
 {
     IFS1bits.U2RXIF = 0;
-    mLED_10 = 1 - mLED_10;
+    //mLED_10 = 1 - mLED_10;
 
     while(U2STAbits.URXDA)
     {
         UART_PushFIFO(UART_BT, U2RXREG);
     }
 }
-
 
 void UART_SPI_Init(void)
 {
@@ -212,8 +218,8 @@ void UART_SPI_Init(void)
     IPC3bits.U1TXIP0 = 1;
 
     //IEC0bits.U1RXIE = 0;
-    _U1RXIE = 1;            // enable U1RX interrupt
-    _U1TXIE = 1;            // enable U1TX interrupt
+    _U1RXIE = 1;            // 1: enable U1RX interrupt
+    _U1TXIE = 1;            // 1: enable U1TX interrupt
 
 }
 
@@ -230,7 +236,7 @@ void UART_BT_Init(void)
     RPOR8bits.RP17R = 5;               //'5' represents U2TX
 
     U2BRG = BRATE_BT;                        // 9600 baud (BREGH=1) at 16MHz FCY
-    U2MODEbits.UARTEN = 1;		// UART1 is Enabled
+    U2MODEbits.UARTEN = 1;		// UART2 is Enabled
     U2MODEbits.USIDL = 0;		// Continue operation at Idlestate
     U2MODEbits.IREN = 0;		// IrDA En/Decoder is disabled
     U2MODEbits.RTSMD = 0; 		// flow control mode
@@ -250,29 +256,29 @@ void UART_BT_Init(void)
     U2STAbits.UTXISEL0 = 0;
     U2STAbits.UTXINV = 0;
     U2STAbits.UTXBRK = 0;
-    U2STAbits.UTXEN = 1;
+    U2STAbits.UTXEN = 1;            // 1: enable Tx interrupt, 0: disable Tx interrupt
+
     U2STAbits.URXISEL1 = 0;        //Interrupt is set when any character is received and transferred from the RSR to the receive buffer.Receive buffer has one or more characters.
     U2STAbits.URXISEL0 = 0;         // Interrupt flag bit is set when a character is received
     U2STAbits.ADDEN = 0;
     U2STAbits.RIDLE = 0;
+
+    // U2RX interrup priority
+    IPC7bits.U2RXIP2 = 1;
+    IPC7bits.U2RXIP1 = 1;
+    IPC7bits.U2RXIP0 = 0;
+    IPC7bits.U2TXIP2 = 1;
+    IPC7bits.U2TXIP1 = 1;
+    IPC7bits.U2TXIP0 = 0;
+
     //reset RX TX interrupt flag
     IFS1bits.U2RXIF = 0;
     IFS1bits.U2TXIF = 0;
     //set up interrupt for UART2, receive and transmit
     //IFS1bits.U2RXIF = 0;
 
-    // U2RX interrup priority
-    IPC7bits.U2RXIP2=1;
-    IPC7bits.U2RXIP1=1;
-    IPC7bits.U2RXIP0=0;
-
-    IPC7bits.U2TXIP2 = 1;
-    IPC7bits.U2TXIP1 = 1;
-    IPC7bits.U2TXIP0 = 0;
-
-    //IEC0bits.U1RXIE = 0;
-    _U2RXIE = 1;            // enable U2RX interrupt
-    _U2TXIE = 1;            // enable U2TX interrupt
+    _U2RXIE = 1;            // 1: enable U2RX interrupt
+    _U2TXIE = 1;            // 1: enable U2TX interrupt
 
     UART_FlushFIFO(UART_BT);
     UART_PutString(UART_BT, "BT_Ready\r\n");
@@ -298,7 +304,7 @@ void UART_PutChar (int uart, unsigned char Ch) //I have the missing ( in my code
  //UART receive function, returns the value received.
 unsigned char UART_GetChar(int uart) //I have the missing ( in my code, the forum is not letting me post it!.
 {
-    if (Check_Rx_buffer(UART_SPI))
+    if (Check_Rx_buffer(uart))
         return UART_PopFIFO(uart);
 }
 
@@ -339,129 +345,12 @@ void UART_Test(void)
     }
 
 }
-
+#if 0
 int atoi(char *s)
 {
     return (int)strtoul(s, NULL, 10);
 }
-
-int UART_BT_Cmd(void)
-{
-    int i,n,m;
-    char cmd[30];
-        n = Check_Rx_buffer(UART_BT);
-        //sprintf(cmd, "n=%d\n", n);
-        //UART_PutString(UART_BT, cmd);
-        if (n >= 2)
-        {
-            n = n/2;
-            // parser the command
-            for (i = 0; i < n; i++)
-            {
-                cmd[0] = UART_PopFIFO(UART_BT);
-                cmd[1] = UART_PopFIFO(UART_BT);
-                cmd[2] = 0;
-                //UART_PutString(UART_BT, cmd);
-                m = atoi(cmd);
-                sprintf(cmd, "Cmd=%d => ", m);
-                UART_PutString(UART_BT, cmd);
-                switch (m)
-                {
-                    case CMD_DEBUG:
-                        Gyro_Car_Debug();
-                        break;
-                    case CMD_TASK_TIME_U:
-                        Gyro_Car_TaskTimer_Up();
-                        break;
-                    case CMD_TASK_TIME_D:
-                        Gyro_Car_TaskTimer_Down();
-                        break;
-                    case CMD_KP_U:
-                        Gyro_Car_Kp_Up();
-                        break;
-                    case CMD_KP_D:
-                        Gyro_Car_Kp_Down();
-                        break;
-                    case CMD_KI_U:
-                        Gyro_Car_Ki_Up();
-                        break;
-                    case CMD_KI_D:
-                        Gyro_Car_Ki_Down();
-                        break;
-                    case CMD_KD_U:
-                        Gyro_Car_Kd_Up();
-                        break;
-                    case CMD_KD_D:
-                        Gyro_Car_Kd_Down();
-                        break;
-                    case CMD_MOTOR:
-                        Gyro_Car_Motor();
-                        break;
-                    case CMD_BL_U:
-                        Gyro_Car_Balance_Up();
-                        break;
-                    case CMD_BL_D:
-                        Gyro_Car_Balance_Down();
-                        break;
-                    case CMD_ANGLE_MAX_U:
-                        Gyro_Car_Angle_Max_Up();
-                        break;
-                    case CMD_ANGLE_MAX_D:
-                        Gyro_Car_Angle_Max_Down();
-                        break;
-                    case CMD_ANGLE_MIN_U:
-                        Gyro_Car_Angle_Min_Up();
-                        break;
-                    case CMD_ANGLE_MIN_D:
-                        Gyro_Car_Angle_Min_Down();
-                        break;
-                    case CMD_ANGLE_STEP_U:
-                        Gyro_Car_Angle_Step_Up();
-                        break;
-                    case CMD_ANGLE_STEP_D:
-                        Gyro_Car_Angle_Step_Down();
-                        break;
-                    case CMD_PWM_STEP_U:
-                        Gyro_Car_PWM_Step_Up();
-                        break;
-                    case CMD_PWM_STEP_D:
-                        Gyro_Car_PWM_Step_Down();
-                        break;
-                    case CMD_PWM_STATIC_U:
-                        Gyro_Car_PWM_Static_Up();
-                        break;
-                    case CMD_PWM_STATIC_D:
-                        Gyro_Car_PWM_Static_Down();
-                        break;
-                    case CMD_CAR_FF:
-                        Gyro_Car_PWM_FF();
-                        break;
-                    case CMD_CAR_BK:
-                        Gyro_Car_PWM_BK();
-                        break;
-                    case CMD_CAR_STOP:
-                        Gyro_Car_PWM_Stop();
-                        break;
-                    case CMD_CAR_RIGHT:
-                        Gyro_Car_PWM_Right();
-                        break;
-                    case CMD_CAR_LEFT:
-                        Gyro_Car_PWM_Left();
-                        break;
-                    case CMD_CAR_SPEED_U:
-                        Gyro_Car_PWM_Speed_Up();
-                        break;
-                    case CMD_CAR_SPEED_D:
-                        Gyro_Car_PWM_Speed_Down();
-                        break;
-                    default:
-                        UART_PutString(UART_BT, "no cmd!\r\n");
-                        break;
-                }
-            }
-        }
-}
-
+#endif
 
 void vTask_UART_BT(void *pvParameters )
 {

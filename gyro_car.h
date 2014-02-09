@@ -34,6 +34,20 @@
 #define CMD_CAR_SPEED_U     35
 #define CMD_CAR_SPEED_D     36
 
+typedef struct
+{
+    int PWM_freq;
+    portTickType Task_timer;
+    int Kp, Ki, Kd;
+    int PWM_Min, PWM_Max, PWM_step, PWM_static;
+    int Angle_Max, Angle_Min;
+    int balance_angle;
+    int angle_step;
+    int angle_target_F, angle_target_B;
+    int motor_onoff, motor_dir_L, motor_dir_R;
+    int debug;
+}Gyro_Car_Str;
+
 void Gyro_Car_PWM_Step_Up(void);
 void Gyro_Car_PWM_Step_Down(void);
 void Gyro_Car_PWM_Static_Up(void);
